@@ -1,0 +1,234 @@
+import React from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, Animated } from 'react-native';
+import { CameraView } from 'expo-camera';
+import { Fonts, BorderRadius } from '@/constants/theme';
+import { FocusFrame } from '@/components/FocusFrame';
+import { GrainOverlay } from '@/components/GrainOverlay';
+import { PozIcon } from '@/components/PozIcon';
+
+export type FlashState = 'auto' | 'on' | 'off';
+export type CameraFacing = 'back' | 'front';
+
+interface MockViewfinderProps {
+  flashState: FlashState;
+  facing: CameraFacing;
+  flashAnimOpacity?: Animated.Value;
+  cameraRef?: React.RefObject<CameraView | null>;
+  isFocused?: boolean;
+}
+
+export const MockViewfinder: React.FC<MockViewfinderProps> = ({
+  flashState,
+  facing,
+  flashAnimOpacity,
+  cameraRef,
+  isFocused = true,
+}) => {
+  const { width } = useWindowDimensions();
+
+  // Responsive width calculation: fit within screen with padding
+  const viewfinderWidth = Math.min(width - 48, 380);
+  const viewfinderHeight = Math.round(viewfinderWidth * 0.65);
+
+  const getFlashText = () => {
+    if (flashState === 'auto') return '⚡ AUTO';
+    if (flashState === 'on') return '⚡ AÇIK';
+    return '⚡ KAPALI';
+  };
+
+  return (
+    <View style={[styles.outerFrame, { width: viewfinderWidth, height: viewfinderHeight }]}>
+      {/* Inner Screen Visual */}
+      <View style={styles.screenContainer}>
+        {/* Real CameraView when focused, otherwise mock dark background */}
+        {isFocused ? (
+          <CameraView
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            facing={facing}
+            flash={flashState}
+          />
+        ) : (
+          <View style={styles.sceneBackground}>
+            {/* Sky Gradient Layer */}
+            <View style={styles.skyUpper} />
+            <View style={styles.skyLower} />
+
+            {/* Sun Circle */}
+            <View style={[styles.sunCircle, facing === 'front' && styles.frontSunCircle]} />
+
+            {/* Sea / Coastline Horizon */}
+            <View style={styles.seaHorizon}>
+              <View style={styles.seaLightGlow} />
+            </View>
+          </View>
+        )}
+
+        {/* Focus Frame Reticle */}
+        <View style={styles.reticleWrapper}>
+          <FocusFrame />
+        </View>
+
+        {/* Analog Grain Texture Overlay */}
+        <GrainOverlay />
+
+        {/* Viewfinder Text Overlays */}
+        <View style={styles.overlayTopRow}>
+          <View style={styles.badgeLabel}>
+            <Text style={styles.badgeText}>AUTO</Text>
+          </View>
+
+          <View style={styles.badgeLabel}>
+            <Text style={styles.badgeText}>{getFlashText()}</Text>
+          </View>
+        </View>
+
+        <View style={styles.overlayBottomRow}>
+          <Text style={styles.dateStampOverlay}>27.07.26</Text>
+
+          <View style={styles.facingBadge}>
+            <PozIcon name="camera" size={10} color="#FFFDF6" />
+            <Text style={styles.facingText}>
+              {facing === 'back' ? 'ARKA' : 'ÖN'}
+            </Text>
+          </View>
+        </View>
+
+        {/* White Flash Effect Overlay on Shutter Press */}
+        {flashAnimOpacity ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.flashOverlay, { opacity: flashAnimOpacity }]}
+          />
+        ) : null}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  outerFrame: {
+    alignSelf: 'center',
+    backgroundColor: '#110E17',
+    borderRadius: BorderRadius.md,
+    padding: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    marginVertical: 10,
+  },
+  screenContainer: {
+    flex: 1,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: '#1F1A2A',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  sceneBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  skyUpper: {
+    height: '55%',
+    backgroundColor: '#E3D7FF',
+  },
+  skyLower: {
+    height: '25%',
+    backgroundColor: '#FFD7EC',
+  },
+  sunCircle: {
+    position: 'absolute',
+    top: '30%',
+    right: '25%',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF1B0',
+    shadowColor: '#FFF1B0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+  },
+  frontSunCircle: {
+    left: '25%',
+    backgroundColor: '#CBEBFC',
+    shadowColor: '#CBEBFC',
+  },
+  seaHorizon: {
+    height: '20%',
+    backgroundColor: '#231F33',
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  seaLightGlow: {
+    height: 3,
+    backgroundColor: '#CBEBFC',
+    opacity: 0.6,
+  },
+  reticleWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overlayTopRow: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  badgeLabel: {
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  badgeText: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFDF6',
+  },
+  overlayBottomRow: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dateStampOverlay: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#E54848',
+    letterSpacing: 1,
+  },
+  facingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+    gap: 4,
+  },
+  facingText: {
+    fontFamily: Fonts.mono,
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#FFFDF6',
+  },
+  flashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFFDF6',
+  },
+});
