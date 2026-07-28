@@ -47,7 +47,7 @@ export const BottomTabBar: React.FC<any> = ({
       style={[styles.floatingWrapper, { paddingBottom: bottomInset }]}
     >
       <View style={styles.tabCapsuleContainer}>
-        {/* Subtle grain/fiber line */}
+        {/* Subtle grain/texture overlay */}
         <View style={styles.grainTextureOverlay} pointerEvents="none" />
 
         {state.routes.map((route: { key: string; name: string }, index: number) => {
@@ -69,53 +69,57 @@ export const BottomTabBar: React.FC<any> = ({
             }
           };
 
-          // Special rendering for center elevated Camera shutter button
+          // Center Camera Button (Elevated Analog Shutter)
           if (config.isCamera) {
             return (
-              <TouchableOpacity
-                key={route.key}
-                activeOpacity={0.88}
-                onPress={onPress}
-                style={styles.cameraTabWrapper}
-              >
-                {/* Physical Shutter Button Outer Rim */}
-                <View style={styles.cameraOuterRim}>
-                  <View style={styles.cameraElevatedButton}>
-                    <View style={styles.shutterInnerRing} />
-                    <PozIcon
-                      name="camera"
-                      size={24}
-                      color={Colors.tabCameraIcon}
-                    />
+              <View key={route.key} style={styles.cameraSlot}>
+                <TouchableOpacity
+                  activeOpacity={0.88}
+                  onPress={onPress}
+                  style={styles.cameraTabWrapper}
+                  accessibilityLabel="kamera moduna geç"
+                >
+                  <View style={styles.cameraOuterRim}>
+                    <View style={styles.cameraElevatedButton}>
+                      <View style={styles.shutterInnerRing} />
+                      <PozIcon
+                        name="camera"
+                        size={22}
+                        color="#F4ECE2"
+                      />
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             );
           }
 
           return (
-            <TouchableOpacity
-              key={route.key}
-              activeOpacity={0.8}
-              onPress={onPress}
-              style={[
-                styles.tabItem,
-                isFocused && styles.tabItemActivePaperTag,
-              ]}
-            >
-              <PozIcon
-                name={config.icon}
-                size={20}
-                color={
-                  isFocused
-                    ? Colors.tabBarActiveIcon
-                    : Colors.tabBarInactiveIcon
-                }
-              />
-              {isFocused && (
-                <Text style={styles.tabLabelText}>{config.label}</Text>
-              )}
-            </TouchableOpacity>
+            <View key={route.key} style={styles.tabSlot}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={onPress}
+                style={[
+                  styles.tabItem,
+                  isFocused && styles.tabItemActivePaperTag,
+                ]}
+              >
+                <PozIcon
+                  name={config.icon}
+                  size={20}
+                  color={
+                    isFocused
+                      ? '#111827'
+                      : Colors.textMuted
+                  }
+                />
+                {isFocused && (
+                  <Text style={styles.tabLabelText} numberOfLines={1}>
+                    {config.label}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           );
         })}
       </View>
@@ -131,28 +135,27 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 100,
+    zIndex: 1000,
   },
   tabCapsuleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#181520',
+    backgroundColor: '#111827', // Deep solid navy capsule
     borderRadius: BorderRadius.full,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
     width: '92%',
     maxWidth: 420,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+
+    // Deep Analog Drop Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 18,
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
     height: 64,
     position: 'relative',
-    overflow: 'hidden',
   },
   grainTextureOverlay: {
     position: 'absolute',
@@ -160,37 +163,48 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    borderRadius: BorderRadius.full,
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  tabSlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: BorderRadius.full,
-    gap: 6,
-    height: 42,
+    gap: 5,
+    height: 40,
   },
   tabItemActivePaperTag: {
-    backgroundColor: '#FAF6EE', // Paper label
-    paddingHorizontal: 14,
+    backgroundColor: '#F7F2EA', // Paper cream label
+    paddingHorizontal: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
-    transform: [{ rotate: '-0.5deg' }],
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabLabelText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11.5,
     fontFamily: Fonts.sansBold,
-    color: Colors.tabBarActiveIcon,
+    color: '#111827',
+  },
+  cameraSlot: {
+    width: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   cameraTabWrapper: {
-    top: -16,
+    position: 'absolute',
+    top: -24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -198,36 +212,36 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#181520',
+    backgroundColor: '#111827', // Solid deep navy fill to prevent content bleeding
     alignItems: 'center',
     justifyContent: 'center',
     padding: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 10,
   },
   cameraElevatedButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: Colors.tabCameraBg, // Lavender fill
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.burgundy, // Editorial burgundy shutter fill
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: Colors.lavenderDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
     position: 'relative',
   },
   shutterInnerRing: {
     position: 'absolute',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1,
-    borderColor: 'rgba(143, 102, 227, 0.4)',
     borderStyle: 'dashed',
+    borderColor: 'rgba(244, 236, 226, 0.4)',
   },
 });

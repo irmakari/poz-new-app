@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: 130, // Bottom Tab Bar clearance
+    paddingBottom: 150, // Bottom Tab Bar clearance
   },
   gridContainer: {
     flexDirection: 'row',

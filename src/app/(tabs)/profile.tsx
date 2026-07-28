@@ -94,6 +94,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: 130, // Clearance for bottom tab bar
+    paddingBottom: 150, // Clearance for bottom tab bar
   },
 });
