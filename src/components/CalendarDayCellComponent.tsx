@@ -54,11 +54,21 @@ export const CalendarDayCellComponent: React.FC<CalendarDayCellProps> = ({
       {/* Memory Indicators Row */}
       {memory && totalCount > 0 && (
         <View style={styles.indicatorsRow}>
-          {memory.photos ? (
+          {memory.dailyPhotos ? (
             <View
               style={[
                 styles.indicatorItem,
-                styles.photoIndicator,
+                styles.dailyPhotoIndicator,
+                isSelected && styles.selectedIndicatorBorder,
+              ]}
+            />
+          ) : null}
+
+          {memory.filmPhotos || (memory.photos && !memory.dailyPhotos) ? (
+            <View
+              style={[
+                styles.indicatorItem,
+                styles.filmPhotoIndicator,
                 isSelected && styles.selectedIndicatorBorder,
               ]}
             />
@@ -174,6 +184,14 @@ const styles = StyleSheet.create({
   },
   photoIndicator: {
     backgroundColor: Colors.lavenderDark,
+  },
+  dailyPhotoIndicator: {
+    backgroundColor: Colors.yellowDark,
+    borderRadius: 1, // Photo print square
+  },
+  filmPhotoIndicator: {
+    backgroundColor: '#1C1A24', // Dark 35mm film frame square
+    borderRadius: 1,
   },
   noteIndicator: {
     backgroundColor: Colors.yellowDark,

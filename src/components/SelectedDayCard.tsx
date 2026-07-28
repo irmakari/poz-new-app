@@ -83,11 +83,20 @@ export const SelectedDayCard: React.FC<SelectedDayCardProps> = ({
       {/* Memory Chips Row */}
       {hasAnyMemory ? (
         <View style={styles.chipsContainer}>
-          {memory?.photos ? (
+          {memory?.dailyPhotos ? (
+            <View style={[styles.memoryTicketChip, { backgroundColor: Colors.yellow }]}>
+              <PozIcon name="photo" size={14} color={Colors.yellowDark} />
+              <Text style={[styles.chipText, { color: Colors.yellowDark }]}>
+                {memory.dailyPhotos} FOTOĞRAF
+              </Text>
+            </View>
+          ) : null}
+
+          {memory?.filmPhotos || (memory?.photos && !memory?.dailyPhotos) ? (
             <View style={[styles.memoryTicketChip, { backgroundColor: Colors.lavender }]}>
-              <PozIcon name="photo" size={14} color={Colors.lavenderDark} />
+              <PozIcon name="films" size={14} color={Colors.lavenderDark} />
               <Text style={[styles.chipText, { color: Colors.lavenderDark }]}>
-                {memory.photos} KARE
+                {memory?.filmPhotos || memory?.photos} FİLM KARESI
               </Text>
             </View>
           ) : null}

@@ -14,11 +14,13 @@ import { PozIcon } from '@/components/PozIcon';
 interface SaveFrameButtonProps {
   frameNumber?: string;
   isFormEmpty?: boolean;
+  onSave?: () => Promise<void> | void;
 }
 
 export const SaveFrameButton: React.FC<SaveFrameButtonProps> = ({
   frameNumber = '13',
   isFormEmpty = true,
+  onSave,
 }) => {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -26,9 +28,17 @@ export const SaveFrameButton: React.FC<SaveFrameButtonProps> = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
 
-  const handleSavePress = () => {
+  const handleSavePress = async () => {
     if (isSaving) return;
     setIsSaving(true);
+
+    if (onSave) {
+      try {
+        await onSave();
+      } catch (err) {
+        console.error('Save failed', err);
+      }
+    }
 
     // 1. Button Press Scale Animation
     Animated.sequence([

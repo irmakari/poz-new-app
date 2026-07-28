@@ -12,6 +12,8 @@ import { PozIcon } from '@/components/PozIcon';
 import { FilmTypeOption, FilmPurposeOption, FrameOption } from '@/utils/newFilmData';
 import { addNewFilm, FilmItem } from '@/utils/filmData';
 
+import { useApp } from '@/context/AppContext';
+
 interface CreateFilmButtonProps {
   filmType: FilmTypeOption;
   displayName: string;
@@ -30,12 +32,13 @@ export const CreateFilmButton: React.FC<CreateFilmButtonProps> = ({
   serialNumber,
 }) => {
   const router = useRouter();
+  const { createNewFilm } = useApp();
   const [isCreating, setIsCreating] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
 
-  const handleCreatePress = () => {
+  const handleCreatePress = async () => {
     if (isCreating) return;
     setIsCreating(true);
 
@@ -60,35 +63,14 @@ export const CreateFilmButton: React.FC<CreateFilmButtonProps> = ({
       useNativeDriver: true,
     }).start();
 
-    // 3. Construct new FilmItem and add to MOCK_FILMS
-    const newFilm: FilmItem = {
-      id: `film-${Date.now()}`,
+    // 3. Create new FilmItem in AsyncStorage AppContext
+    await createNewFilm({
       title: displayName,
-      dateLabel: startDateStr.includes('2026') ? startDateStr : `${startDateStr} 2026`,
-      type: `35mm · iso ${filmType.iso}`,
-      iso: filmType.iso,
-      frameCount: 0,
+      iso: `ISO ${filmType.iso}`,
       totalFrames: frameCount.count,
-      status: 'active',
-      color: filmType.primaryColor,
-      darkColor: filmType.darkColor,
-      serial: serialNumber,
-      stampText: `35MM ISO ${filmType.iso}`,
-      coverIcon: 'films',
-      rotation: '-1.5deg',
-      startDate: startDateStr,
-      purpose: purpose.label,
-      summaryMessage: `yeni film rulosu "${displayName}" çekime başladı.`,
-      stats: {
-        memoryDays: 0,
-        songCount: 0,
-        topMood: 'taze',
-        locationCount: 0,
-        topDay: 'bugün',
-      },
-    };
-
-    addNewFilm(newFilm);
+      description: `${purpose.label} için oluşturulan ${frameCount.count} pozluk film.`,
+      coverColor: filmType.primaryColor,
+    });
 
     // 4. Redirect to Films Screen after 900ms
     setTimeout(() => {

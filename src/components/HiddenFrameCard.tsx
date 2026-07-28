@@ -1,9 +1,46 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PaperStamp } from '@/components/PaperStamp';
 import { TapeDecoration } from '@/components/TapeDecoration';
 import { PozIcon } from '@/components/PozIcon';
+import { GrainOverlay } from '@/components/GrainOverlay';
+import { MockAnalogScene } from '@/components/MockAnalogScene';
+
+import { getFormattedTodayFull, getFormattedTime, getFormattedTodayStamp } from '@/utils/dateUtils';
+
+type FilterType = 'summer-glow' | 'warm-vintage' | 'kodak-gold' | 'bw-noir';
+
+interface FilterOption {
+  id: FilterType;
+  name: string;
+  overlayColor: string;
+}
+
+const FILTERS: FilterOption[] = [
+  {
+    id: 'summer-glow',
+    name: 'Summer Glow 400',
+    overlayColor: 'rgba(255, 195, 110, 0.14)',
+  },
+  {
+    id: 'warm-vintage',
+    name: 'Warm Vintage 90s',
+    overlayColor: 'rgba(230, 140, 70, 0.16)',
+  },
+  {
+    id: 'kodak-gold',
+    name: 'Kodak Gold 200',
+    overlayColor: 'rgba(255, 215, 80, 0.12)',
+  },
+  {
+    id: 'bw-noir',
+    name: '35mm B&W Noir',
+    overlayColor: 'rgba(20, 15, 30, 0.45)',
+  },
+];
 
 interface HiddenFrameCardProps {
   frameNumber?: string;
@@ -11,18 +48,91 @@ interface HiddenFrameCardProps {
   serialNumber?: string;
   dateStr?: string;
   timeStr?: string;
+  photoUri?: string;
+  isTestModeInitial?: boolean;
 }
 
 export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
   frameNumber = '13',
   filmName = 'summer glow',
   serialNumber = 'SG-0726-013',
-  dateStr = '27 temmuz 2026',
-  timeStr = '18:42',
+  dateStr = getFormattedTodayFull(),
+  timeStr = getFormattedTime(),
+  photoUri,
+  isTestModeInitial = false,
 }) => {
+  const [isTestMode, setIsTestMode] = useState(isTestModeInitial);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('summer-glow');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const currentFilterObj = FILTERS.find((f) => f.id === selectedFilter) || FILTERS[0];
+
+  const handleDownloadToGallery = async () => {
+    if (!photoUri) {
+      Alert.alert(
+        'Fotoğraf Bulunamadı',
+        'Galeriye indirilecek aktif bir fotoğraf bulunamadı. Lütfen kamera ekranından yeni bir kare çekin.'
+      );
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        await MediaLibrary.createAssetAsync(photoUri);
+        Alert.alert('Galerine İndirildi! 📸', 'Fotoğraf başarıyla telefonunun galerisine kaydedildi.');
+      } else {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(photoUri);
+        } else {
+          Alert.alert(
+            'İzin Gerekli',
+            'Fotoğrafı galeriye kaydetmek için medya erişim izni vermelisiniz.'
+          );
+        }
+      }
+    } catch (error) {
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(photoUri);
+      } else {
+        Alert.alert('Görüntü Kaydedildi', 'Fotoğraf galeriye aktarıldı.');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <View style={styles.cardContainer}>
       <TapeDecoration position="top-right" width={42} height={12} color={Colors.tapeLavender} />
+
+      {/* Mode Switcher Bar (Gizli Kare vs Efekt Testi) */}
+      <View style={styles.toggleHeaderRow}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setIsTestMode(false)}
+          style={[styles.toggleTab, !isTestMode && styles.toggleTabActiveLock]}
+        >
+          <PozIcon name="lock" size={12} color={!isTestMode ? '#FFFDF6' : Colors.textMuted} />
+          <Text style={[styles.toggleTabText, !isTestMode && styles.toggleTabTextActive]}>
+            GİZLİ KARE
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setIsTestMode(true)}
+          style={[styles.toggleTab, isTestMode && styles.toggleTabActiveSparkle]}
+        >
+          <PozIcon name="sparkle" size={12} color={isTestMode ? Colors.yellowDark : Colors.textMuted} />
+          <Text style={[styles.toggleTabText, isTestMode && styles.toggleTabTextActiveSparkle]}>
+            ✨ EFEKT ÖNİZLEME (TEST)
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Dark Negative Frame Box */}
       <View style={styles.darkFrameBox}>
@@ -33,14 +143,39 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
           ))}
         </View>
 
-        {/* Center Closed Negative Visual */}
-        <View style={styles.closedNegativeVisual}>
-          <View style={styles.lockBadge}>
-            <PozIcon name="lock" size={26} color="rgba(255, 255, 255, 0.6)" />
+        {!isTestMode ? (
+          /* Normal Analog Hidden Locked Visual */
+          <View style={styles.closedNegativeVisual}>
+            <View style={styles.lockBadge}>
+              <PozIcon name="lock" size={26} color="rgba(255, 255, 255, 0.6)" />
+            </View>
+            <Text style={styles.unexposedTitle}>GİZLİ KARE • {frameNumber}. POZ</Text>
+            <Text style={styles.unexposedSub}>BANYODAN SONRA AÇILACAK</Text>
           </View>
-          <Text style={styles.unexposedTitle}>GİZLİ KARE • {frameNumber}. POZ</Text>
-          <Text style={styles.unexposedSub}>BANYODAN SONRA AÇILACAK</Text>
-        </View>
+        ) : (
+          /* Live Effect Preview Mode Visual (Clean Photo + 35mm Filter + Red Date Stamp ONLY) */
+          <View style={styles.effectPreviewVisual}>
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
+            ) : (
+              <MockAnalogScene sceneType="coffee-table" />
+            )}
+
+            {/* Vintage Color Grade Overlay */}
+            <View
+              style={[styles.colorGradeOverlay, { backgroundColor: currentFilterObj.overlayColor }]}
+              pointerEvents="none"
+            />
+
+            {/* Analog Grain Texture Overlay */}
+            <GrainOverlay />
+
+            {/* Authentic Red Digital Date Stamp (90s Analog Camera Style) */}
+            <View style={styles.dateStampContainer} pointerEvents="none">
+              <Text style={styles.dateStampText}>{getFormattedTodayStamp()}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Sprocket Holes Row (Bottom) */}
         <View style={styles.sprocketRow}>
@@ -48,6 +183,43 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
             <View key={`b-${i}`} style={styles.sprocketHole} />
           ))}
         </View>
+
+        {/* Interactive Filter Pills & Save to Gallery in Test Mode */}
+        {isTestMode && (
+          <View style={styles.filterSelectorContainer}>
+            <Text style={styles.filterSelectorTitle}>FİLM STOK EFEKTİNİ SEÇ:</Text>
+            <View style={styles.filterPillRow}>
+              {FILTERS.map((filter) => {
+                const isActive = selectedFilter === filter.id;
+                return (
+                  <TouchableOpacity
+                    key={filter.id}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedFilter(filter.id)}
+                    style={[styles.filterPill, isActive && styles.filterPillActive]}
+                  >
+                    <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>
+                      {filter.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Download / Save to Gallery Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleDownloadToGallery}
+              disabled={isSaving}
+              style={styles.downloadButton}
+            >
+              <PozIcon name="photo" size={16} color={Colors.yellowDark} />
+              <Text style={styles.downloadButtonText}>
+                {isSaving ? 'GALERİYE KAYDEDİLİYOR...' : '📥 FOTOĞRAFI GALERİYE İNDİR'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Frame Details & Rubber Stamp */}
@@ -65,8 +237,16 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
 
       {/* Hero Explanatory Subtext */}
       <View style={styles.heroMessageCard}>
-        <Text style={styles.heroMessageTitle}>bu kare, filmin açılana kadar gizli kalacak.</Text>
-        <Text style={styles.heroMessageSub}>şimdilik yalnızca o ana ait birkaç küçük iz bırak.</Text>
+        <Text style={styles.heroMessageTitle}>
+          {isTestMode
+            ? '✨ Efekt Test Modu Açık: Fotoğrafın 35mm doku ve tarih damgasıyla nasıl göründüğünü inceleyebilirsin!'
+            : 'bu kare, filmin açılana kadar gizli kalacak.'}
+        </Text>
+        <Text style={styles.heroMessageSub}>
+          {isTestMode
+            ? 'Farklı film stoklarına basarak renk ve kum efektini canlı olarak deneyebilirsin.'
+            : 'şimdilik yalnızca o ana ait birkaç küçük iz bırak.'}
+        </Text>
       </View>
     </View>
   );
@@ -76,6 +256,43 @@ const styles = StyleSheet.create({
   cardContainer: {
     marginBottom: Spacing.md,
     position: 'relative',
+  },
+  toggleHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  toggleTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: 'rgba(28, 26, 36, 0.06)',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  toggleTabActiveLock: {
+    backgroundColor: '#16141D',
+    borderColor: '#2A2436',
+  },
+  toggleTabActiveSparkle: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+  toggleTabText: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    fontWeight: '800',
+    color: Colors.textMuted,
+  },
+  toggleTabTextActive: {
+    color: '#FFFDF6',
+  },
+  toggleTabTextActiveSparkle: {
+    color: Colors.yellowDark,
   },
   darkFrameBox: {
     backgroundColor: '#16141D',
@@ -102,7 +319,8 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
   closedNegativeVisual: {
-    height: 120,
+    width: '100%',
+    aspectRatio: 1.5,
     backgroundColor: '#201C2B',
     borderRadius: 6,
     alignItems: 'center',
@@ -132,6 +350,103 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 9,
     color: Colors.lavender,
+    letterSpacing: 0.5,
+  },
+  effectPreviewVisual: {
+    width: '100%',
+    aspectRatio: 1.5,
+    borderRadius: 6,
+    overflow: 'hidden',
+    position: 'relative',
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  colorGradeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  dateStampContainer: {
+    position: 'absolute',
+    bottom: 8,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  dateStampText: {
+    fontFamily: Fonts.mono,
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FF4D4D',
+    letterSpacing: 1.5,
+  },
+  filterSelectorContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  filterSelectorTitle: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: 'rgba(255, 255, 255, 0.6)',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  filterPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  filterPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  filterPillActive: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+  filterPillText: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    color: 'rgba(255, 255, 255, 0.75)',
+  },
+  filterPillTextActive: {
+    color: Colors.yellowDark,
+    fontWeight: '800',
+  },
+  downloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.yellow,
+    borderRadius: BorderRadius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: Colors.yellowDark,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  downloadButtonText: {
+    fontFamily: Fonts.mono,
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.yellowDark,
     letterSpacing: 0.5,
   },
   detailsRow: {

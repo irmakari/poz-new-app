@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
@@ -15,8 +18,56 @@ import { FilmProgress } from '@/components/FilmProgress';
 import { WeekSelector } from '@/components/WeekSelector';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
+import { useApp } from '@/context/AppContext';
+import { getTodayKey, getFormattedTodayHeader, getFormattedTime } from '@/utils/dateUtils';
 
 export default function HomeScreen() {
+  const { activeFilm, dailyNotes, photos, saveDailyNote, deleteDailyNote } = useApp();
+
+  const todayKey = getTodayKey();
+  const todayNoteObj = dailyNotes[todayKey];
+
+  const hasNote = Boolean(todayNoteObj && todayNoteObj.note && todayNoteObj.note.trim());
+  const hasMood = Boolean(todayNoteObj && todayNoteObj.mood && todayNoteObj.mood.trim());
+  const hasSong = Boolean(todayNoteObj && todayNoteObj.song && todayNoteObj.song.title && todayNoteObj.song.title.trim());
+
+  const todayDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && (p.date.includes('28 temmuz') || p.date.includes(todayKey)));
+  const todayFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && (p.date.includes('28 temmuz') || p.date.includes(todayKey)));
+
+  const dailyCount = todayDailyPhotos.length;
+  const filmCount = todayFilmPhotos.length;
+  const totalPhotosCount = dailyCount + filmCount;
+
+  // Note edit modal state
+  const [isEditNoteModalOpen, setIsEditNoteModalOpen] = useState(false);
+  const [noteInputText, setNoteInputText] = useState(todayNoteObj?.note || '');
+
+  const handleSaveNote = async () => {
+    await saveDailyNote(todayKey, { note: noteInputText });
+    setIsEditNoteModalOpen(false);
+  };
+
+  const handleDeleteNote = async () => {
+    Alert.alert('Notu Sil', 'Bugünün notunu silmek istediğine emin misin?', [
+      { text: 'Vazgeç', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteDailyNote(todayKey);
+          setNoteInputText('');
+          setIsEditNoteModalOpen(false);
+        },
+      },
+    ]);
+  };
+
+  const currentFrames = activeFilm ? activeFilm.currentFrames : 12;
+  const totalFrames = activeFilm ? activeFilm.totalFrames : 36;
+  const remainingFrames = activeFilm ? activeFilm.remainingFrames : 24;
+  const filmTitle = activeFilm ? activeFilm.title : 'summer glow';
+  const isoTag = activeFilm ? activeFilm.isoTag : '35MM ISO 400';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -32,7 +83,7 @@ export default function HomeScreen() {
             </View>
             <View>
               <Text style={styles.welcomeText}>merhaba, ırmak</Text>
-              <Text style={styles.dateText}>27 temmuz, pazartesi</Text>
+              <Text style={styles.dateText}>{getFormattedTodayHeader()}</Text>
             </View>
           </View>
 
@@ -52,16 +103,15 @@ export default function HomeScreen() {
           rotation="-1.2deg"
           hasTape="top-right"
           tapeColor={Colors.tapeDefault}
-          tapeRotation="14deg"
+          hasTornEdge="bottom"
           padding={Spacing.lg}
           style={styles.heroEnvelope}
         >
-          {/* Top Notch of Lab Envelope */}
           <View style={styles.envelopeFlapLine} />
 
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroTitleGroup}>
-              <PaperStamp label="35MM ISO 400" color={Colors.blueDark} rotation="-3deg" />
+              <PaperStamp label={isoTag || '35MM ISO 400'} color={Colors.blueDark} rotation="-3deg" />
               <Text style={styles.heroSubHeader}>bugünün filmi</Text>
             </View>
 
@@ -76,21 +126,21 @@ export default function HomeScreen() {
           </View>
 
           {/* Film Name */}
-          <Text style={styles.filmTitle}>summer glow</Text>
+          <Text style={styles.filmTitle}>{filmTitle}</Text>
 
           {/* Physical 35mm Negative Film Strip Component */}
-          <FilmProgress currentFrames={12} totalFrames={36} />
+          <FilmProgress currentFrames={currentFrames || 0} totalFrames={totalFrames || 36} />
 
           <View style={styles.heroFooterRow}>
-            <Text style={styles.frameCounterText}>12 / 36 kare çektin</Text>
-            <Text style={styles.remainingBadge}>24 KARE KALDI</Text>
+            <Text style={styles.frameCounterText}>{currentFrames} / {totalFrames} kare çektin</Text>
+            <Text style={styles.remainingBadge}>{remainingFrames} KARE KALDI</Text>
           </View>
         </ScrapbookCard>
 
-        {/* Weekly Date Selector (Lab Date Tickets) */}
+        {/* Dynamic Week Selector */}
         <WeekSelector />
 
-        {/* Section Header with Highlighter Accent & Rubber Stamp */}
+        {/* 2x2 Masonry Scrapbook Collage Grid */}
         <SectionTitle title="bugünün anıları" stamp="DAILY LOG" />
 
         {/* Organic Scrapbook Collage (Staggered Layout) */}
@@ -105,6 +155,10 @@ export default function HomeScreen() {
               tapeColor={Colors.tapePink}
               hasTornEdge="bottom"
               padding={Spacing.md}
+              onPress={() => {
+                setNoteInputText(todayNoteObj?.note || '');
+                setIsEditNoteModalOpen(true);
+              }}
               style={styles.yellowMemoCard}
             >
               <View style={styles.cardHeaderRow}>
@@ -113,11 +167,13 @@ export default function HomeScreen() {
               </View>
 
               <Text style={styles.handwrittenNoteText}>
-                “bugün biraz yorucuydu ama akşam güzel hissettirdi.”
+                {hasNote ? todayNoteObj!.note : 'dokunarak bugünün ilk notunu yaz... ✍️'}
               </Text>
 
               <View style={styles.noteFooter}>
-                <Text style={styles.handwrittenTimestamp}>22:45 • ev</Text>
+                <Text style={styles.handwrittenTimestamp}>
+                  {hasNote ? (todayNoteObj?.timestamp || `${getFormattedTime()} • ev`) : `${getFormattedTime()} • henüz not yok`}
+                </Text>
               </View>
             </ScrapbookCard>
 
@@ -134,10 +190,12 @@ export default function HomeScreen() {
                 <PozIcon name="sparkle" size={20} color={Colors.greenDark} />
                 <Text style={styles.moodTagText}>bugünkü hissin</Text>
               </View>
-              <Text style={styles.moodValueText}>huzurlu</Text>
+              <Text style={styles.moodValueText}>
+                {hasMood ? todayNoteObj!.mood : 'henüz taze'}
+              </Text>
 
               <View style={styles.stickerBadge}>
-                <Text style={styles.stickerText}>★ GOOD VIBES</Text>
+                <Text style={styles.stickerText}>{hasMood ? '★ GOOD VIBES' : '★ BUGÜN'}</Text>
               </View>
             </ScrapbookCard>
           </View>
@@ -155,27 +213,42 @@ export default function HomeScreen() {
             >
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.cardHeaderTitle}>bugünün kareleri</Text>
-                <Text style={styles.photoCountBadge}>2 KARE</Text>
+                <Text style={styles.photoCountBadge}>
+                  {dailyCount > 0 || filmCount > 0 ? `${dailyCount} BASKI • ${filmCount} FİLM` : '0 KARE'}
+                </Text>
               </View>
 
               {/* Physical Stacked Polaroid Prints */}
               <View style={styles.photoStackContainer}>
-                {/* Back Photo Print */}
-                <View style={styles.photoPrintBack}>
-                  <View style={styles.negativeDarkFill}>
-                    <PozIcon name="photo" size={22} color="rgba(255, 255, 255, 0.4)" />
-                  </View>
-                  <Text style={styles.printCodeText}>KARE #01</Text>
-                </View>
+                {totalPhotosCount > 0 ? (
+                  <>
+                    {/* Back Photo Print (Daily or Film) */}
+                    <View style={styles.photoPrintBack}>
+                      <View style={styles.negativeDarkFill}>
+                        <PozIcon name={filmCount > 0 ? 'films' : 'photo'} size={22} color="rgba(255, 255, 255, 0.4)" />
+                      </View>
+                      <Text style={styles.printCodeText}>{dailyCount > 0 ? 'GÜNLÜK BASKI' : 'FİLM KARESI'}</Text>
+                    </View>
 
-                {/* Front Photo Print */}
-                <View style={styles.photoPrintFront}>
-                  <TapeDecoration position="top-right" width={32} height={10} color={Colors.tapeDefault} />
-                  <View style={styles.negativeDarkFillFront}>
-                    <PozIcon name="camera" size={24} color={Colors.lavender} />
+                    {/* Front Photo Print */}
+                    <View style={styles.photoPrintFront}>
+                      <TapeDecoration position="top-right" width={32} height={10} color={Colors.tapeDefault} />
+                      <View style={styles.negativeDarkFillFront}>
+                        <PozIcon name={dailyCount > 0 ? 'photo' : 'camera'} size={24} color={Colors.lavender} />
+                      </View>
+                      <Text style={styles.printCodeText}>
+                        {dailyCount > 0 ? `${dailyCount} GÜNLÜK FOTOĞRAF` : `${filmCount} FİLM KARESI`}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <View style={{ alignItems: 'center', justifyContent: 'center', height: 110, gap: 4 }}>
+                    <PozIcon name="camera" size={32} color={Colors.lavenderDark} />
+                    <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.lavenderDark, textAlign: 'center' }}>
+                      henüz kare çekilmedi
+                    </Text>
                   </View>
-                  <Text style={styles.printCodeText}>KARE #02 • 35MM</Text>
-                </View>
+                )}
               </View>
             </ScrapbookCard>
 
@@ -199,8 +272,12 @@ export default function HomeScreen() {
                   <PozIcon name="music" size={20} color="#FFFDF6" />
                 </View>
                 <View style={styles.songInfoGroup}>
-                  <Text style={styles.songTitleText} numberOfLines={1}>a canım</Text>
-                  <Text style={styles.artistNameText} numberOfLines={1}>mabel matiz</Text>
+                  <Text style={styles.songTitleText} numberOfLines={1}>
+                    {hasSong ? todayNoteObj!.song!.title : 'şarkı seçilmedi'}
+                  </Text>
+                  <Text style={styles.artistNameText} numberOfLines={1}>
+                    {hasSong ? todayNoteObj!.song!.artist : 'dokunarak ekle 🎵'}
+                  </Text>
                 </View>
               </View>
 
@@ -217,6 +294,53 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Edit Daily Note Modal */}
+      <Modal
+        visible={isEditNoteModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditNoteModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleText}>günün notunu düzenle</Text>
+              <TouchableOpacity
+                onPress={() => setIsEditNoteModalOpen(false)}
+                style={styles.closeButton}
+              >
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.modalTextInput}
+              multiline={true}
+              placeholder="Bugün nasıl geçti? Birkaç cümle yaz..."
+              placeholderTextColor={Colors.textMuted}
+              value={noteInputText}
+              onChangeText={setNoteInputText}
+            />
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={styles.modalDeleteButton}
+                onPress={handleDeleteNote}
+              >
+                <Text style={styles.modalDeleteText}>Sil</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalSaveButton}
+                onPress={handleSaveNote}
+              >
+                <Text style={styles.modalSaveText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -607,5 +731,78 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pinkDark,
     borderRadius: 2,
     opacity: 0.7,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#FFFDF9',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  modalTitleText: {
+    fontSize: 18,
+    fontFamily: Fonts.serif,
+    color: Colors.text,
+    fontWeight: '800',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalTextInput: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.text,
+    backgroundColor: 'rgba(28, 26, 36, 0.04)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    minHeight: 110,
+    textAlignVertical: 'top',
+    marginBottom: Spacing.md,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalDeleteButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(229, 72, 72, 0.1)',
+  },
+  modalDeleteText: {
+    fontSize: 14,
+    fontFamily: Fonts.sansBold,
+    color: Colors.stampRed,
+  },
+  modalSaveButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: BorderRadius.md,
+    backgroundColor: '#181520',
+  },
+  modalSaveText: {
+    fontSize: 14,
+    fontFamily: Fonts.sansBold,
+    color: '#FFFDF9',
   },
 });

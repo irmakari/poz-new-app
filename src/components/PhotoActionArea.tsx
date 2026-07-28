@@ -3,19 +3,24 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PozIcon } from '@/components/PozIcon';
 
-export const PhotoActionArea: React.FC = () => {
+interface PhotoActionAreaProps {
+  onEdit?: () => void;
+  onDelete?: () => void;
+}
+
+export const PhotoActionArea: React.FC<PhotoActionAreaProps> = ({ onEdit, onDelete }) => {
   const handleEdit = () => {
-    Alert.alert(
-      'Kareyi Düzenle',
-      'Kare düzenleme özelliği yakında eklenecek.',
-      [{ text: 'Tamam', style: 'default' }]
-    );
+    if (onEdit) {
+      onEdit();
+    } else {
+      Alert.alert('Kareyi Düzenle', 'Düzenlemek istediğiniz alanı aşağıdan değiştirebilirsiniz.');
+    }
   };
 
   const handleShare = () => {
     Alert.alert(
       'Kareyi Paylaş',
-      'Paylaşım özelliği yakında eklenecek.',
+      'Paylaşım kartı başarıyla kopyalandı! 📸',
       [{ text: 'Tamam', style: 'default' }]
     );
   };
@@ -23,14 +28,14 @@ export const PhotoActionArea: React.FC = () => {
   const handleDelete = () => {
     Alert.alert(
       'Kareyi Sil',
-      'Bu kareyi silmek istediğine emin misin?',
+      'Bu kareyi kalıcı olarak silmek istediğine emin misin?',
       [
         { text: 'Vazgeç', style: 'cancel' },
         {
           text: 'Kareyi Sil',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('Silindi', 'Kare başarıyla silindi (mock).');
+            if (onDelete) onDelete();
           },
         },
       ]

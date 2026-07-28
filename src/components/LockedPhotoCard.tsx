@@ -37,8 +37,8 @@ export const LockedPhotoCard: React.FC<LockedPhotoCardProps> = ({ photo }) => {
           </Text>
 
           <View style={styles.infoBadgeRow}>
-            <Text style={styles.badgeText}>{photo.filmTitle.toUpperCase()}</Text>
-            <Text style={styles.badgeText}>KARE #{photo.frameNumber}</Text>
+            <Text style={styles.badgeText}>{(photo.filmTitle || 'SUMMER GLOW').toUpperCase()}</Text>
+            <Text style={styles.badgeText}>KARE #{photo.frameNumber || 1}</Text>
           </View>
         </View>
 

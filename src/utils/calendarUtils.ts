@@ -1,4 +1,8 @@
+import { getTodayKey } from '@/utils/dateUtils';
+
 export interface DayMemory {
+  dailyPhotos?: number;
+  filmPhotos?: number;
   photos?: number;
   notes?: number;
   songs?: number;
@@ -17,9 +21,9 @@ export interface CalendarDayCell {
 
 export const MONTH_NAMES = ['haziran 2026', 'temmuz 2026', 'ağustos 2026'];
 
-// Mock Data indexed by YYYY-MM-DD
+// Mock Data indexed by YYYY-MM-DD for PAST days only
 export const MOCK_MEMORIES: Record<string, DayMemory> = {
-  // Temmuz 2026
+  // Temmuz 2026 Past Days
   '2026-07-03': { photos: 1 },
   '2026-07-05': { notes: 1, mood: 'sakin' },
   '2026-07-08': { photos: 2, songs: 1, songText: 'güneş - ezhel' },
@@ -35,20 +39,12 @@ export const MOCK_MEMORIES: Record<string, DayMemory> = {
     noteText: 'bugün biraz yorucuydu ama akşam güzel hissettirdi.',
     songText: 'a canım • mabel matiz',
   },
-  '2026-07-29': { photos: 1 },
-  '2026-07-31': { songs: 1, songText: 'yaz yağmuru - serdar ortaç' },
 
   // Haziran 2026 Mock
   '2026-06-04': { photos: 1, mood: 'mutlu' },
   '2026-06-11': { notes: 1, noteText: 'yeni projeye başladık.' },
   '2026-06-18': { photos: 3, songs: 1 },
   '2026-06-25': { mood: 'coşkulu', photos: 1 },
-
-  // Ağustos 2026 Mock
-  '2026-08-02': { photos: 1, mood: 'enerjik' },
-  '2026-08-10': { notes: 1, songs: 1 },
-  '2026-08-15': { photos: 2, mood: 'huzurlu' },
-  '2026-08-22': { photos: 1, notes: 1 },
 };
 
 /**
@@ -64,6 +60,7 @@ export function generateCalendarGrid(monthIndex: number): {
   const monthNum = monthIndex + 6; // 6 = June, 7 = July, 8 = August
   const year = 2026;
   const monthTitle = MONTH_NAMES[monthIndex] || 'temmuz 2026';
+  const todayKeyStr = getTodayKey();
 
   // JS Date month is 0-indexed: June = 5, July = 6, Aug = 7
   const jsMonth = monthNum - 1;
@@ -93,7 +90,7 @@ export function generateCalendarGrid(monthIndex: number): {
   // Current month days
   for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
     const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-    const isToday = monthNum === 7 && dayNum === 27; // 27 July 2026 is today
+    const isToday = dateStr === todayKeyStr;
     days.push({
       dateNumber: dayNum,
       fullDateString: dateStr,

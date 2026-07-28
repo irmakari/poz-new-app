@@ -7,21 +7,14 @@ import { PozIcon } from '@/components/PozIcon';
 import { PhotoDetailItem } from '@/utils/dayData';
 
 interface PhotoPrintProps {
-  item: PhotoDetailItem;
+  item: any;
 }
 
 export const PhotoPrint: React.FC<PhotoPrintProps> = ({ item }) => {
   const router = useRouter();
 
   const handlePhotoPress = () => {
-    const photoIdMap: Record<string, string> = {
-      '12A': 'summer-glow-13',
-      '08A': 'summer-glow-08',
-      '21A': 'golden-hour-21',
-      '04A': 'midnight-04',
-    };
-
-    const targetId = photoIdMap[item.code] || 'summer-glow-13';
+    const targetId = item.id || 'summer-glow-13';
 
     router.push({
       pathname: '/photo/[id]',
@@ -29,32 +22,36 @@ export const PhotoPrint: React.FC<PhotoPrintProps> = ({ item }) => {
     });
   };
 
+  const itemCode = item.code || item.frameCode || 'PRINT';
+  const itemDate = item.dateStr || item.date || '27 temmuz';
+  const itemRotation = item.rotation || '-1.5deg';
+
   return (
     <TouchableOpacity
       activeOpacity={0.88}
-      accessibilityLabel={`Fotoğraf karesi ${item.code}`}
+      accessibilityLabel={`Fotoğraf karesi ${itemCode}`}
       onPress={handlePhotoPress}
       style={[
         styles.photoFrameContainer,
-        { transform: [{ rotate: item.rotation }] },
+        { transform: [{ rotate: itemRotation }] },
       ]}
     >
       <TapeDecoration position="top-right" width={38} height={12} color={Colors.tapeDefault} />
 
       {/* Mock Visual Area */}
-      <View style={[styles.visualArea, { backgroundColor: item.bgGradient[0] }]}>
-        <View style={[styles.visualAccentCircle, { backgroundColor: item.bgGradient[1] }]} />
-        <PozIcon name={item.iconName} size={36} color="#FFFDF6" />
+      <View style={[styles.visualArea, { backgroundColor: item.bgGradient?.[0] || '#FFF1B0' }]}>
+        <View style={[styles.visualAccentCircle, { backgroundColor: item.bgGradient?.[1] || '#FFD7EC' }]} />
+        <PozIcon name={item.iconName || 'photo'} size={36} color="#FFFDF6" />
 
         <View style={styles.filmBadge}>
-          <Text style={styles.filmBadgeText}>35MM</Text>
+          <Text style={styles.filmBadgeText}>{item.captureMode === 'daily' ? 'DAILY' : '35MM'}</Text>
         </View>
       </View>
 
       {/* White Frame Bottom Label */}
       <View style={styles.frameLabelRow}>
-        <Text style={styles.codeText}>{item.code}</Text>
-        <Text style={styles.dateText}>{item.dateStr}</Text>
+        <Text style={styles.codeText}>{itemCode}</Text>
+        <Text style={styles.dateText}>{itemDate}</Text>
       </View>
     </TouchableOpacity>
   );

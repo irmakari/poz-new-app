@@ -8,12 +8,17 @@ import { CalendarDayCellComponent } from '@/components/CalendarDayCellComponent'
 import { MonthlyFilmStrip } from '@/components/MonthlyFilmStrip';
 import { SelectedDayCard } from '@/components/SelectedDayCard';
 import { SectionTitle } from '@/components/SectionTitle';
-import { generateCalendarGrid, MOCK_MEMORIES } from '@/utils/calendarUtils';
+import { generateCalendarGrid, MOCK_MEMORIES, DayMemory } from '@/utils/calendarUtils';
+import { getTodayKey } from '@/utils/dateUtils';
+import { useApp } from '@/context/AppContext';
 
 export default function CalendarScreen() {
+  const { dailyNotes, photos } = useApp();
+  const todayKeyStr = getTodayKey();
+
   // 0 = Haziran 2026, 1 = Temmuz 2026, 2 = Ağustos 2026
   const [monthIndex, setMonthIndex] = useState<number>(1); // Default July (1)
-  const [selectedDate, setSelectedDate] = useState<string>('2026-07-27'); // Default 27 July 2026
+  const [selectedDate, setSelectedDate] = useState<string>(todayKeyStr); // Default today
 
   const { monthTitle, days } = generateCalendarGrid(monthIndex);
 
@@ -37,7 +42,39 @@ export default function CalendarScreen() {
     }
   };
 
-  const selectedMemory = MOCK_MEMORIES[selectedDate];
+  const getMemoryForDate = (dateStr: string): DayMemory | undefined => {
+    const mock = MOCK_MEMORIES[dateStr];
+    const userNote = dailyNotes[dateStr];
+    const userDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && p.date.includes(dateStr));
+    const userFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && p.date.includes(dateStr));
+
+    const dailyPhotosCount = userDailyPhotos.length;
+    const filmPhotosCount = (mock?.photos || 0) + userFilmPhotos.length;
+    const photosCount = dailyPhotosCount + filmPhotosCount;
+
+    const notesCount = (mock?.notes || 0) + (userNote?.note ? 1 : 0);
+    const songsCount = (mock?.songs || 0) + (userNote?.song ? 1 : 0);
+    const mood = userNote?.mood || mock?.mood;
+    const noteText = userNote?.note || mock?.noteText;
+    const songText = userNote?.song ? `${userNote.song.title} • ${userNote.song.artist}` : mock?.songText;
+
+    if (!photosCount && !notesCount && !songsCount && !mood) {
+      return undefined;
+    }
+
+    return {
+      dailyPhotos: dailyPhotosCount || undefined,
+      filmPhotos: filmPhotosCount || undefined,
+      photos: photosCount || undefined,
+      notes: notesCount || undefined,
+      songs: songsCount || undefined,
+      mood,
+      noteText,
+      songText,
+    };
+  };
+
+  const selectedMemory = getMemoryForDate(selectedDate);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -62,7 +99,7 @@ export default function CalendarScreen() {
           {days.map((cell, idx) => (
             <CalendarDayCellComponent
               key={`${cell.fullDateString}-${idx}`}
-              cell={cell}
+              cell={{ ...cell, memory: getMemoryForDate(cell.fullDateString) }}
               isSelected={cell.fullDateString === selectedDate}
               onSelect={setSelectedDate}
             />

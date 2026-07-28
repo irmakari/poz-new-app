@@ -20,13 +20,15 @@ export const PhotoFront: React.FC<PhotoFrontProps> = ({ photo, cardWidth }) => {
 
       {/* Main Photo Scene Container */}
       <View style={[styles.sceneContainer, { height: visualHeight }]}>
-        <MockAnalogScene sceneType={photo.sceneType} bgColors={photo.bgColors} />
+        <MockAnalogScene sceneType={(photo.sceneType as any) || 'sunset-seaside'} bgColors={photo.bgColors} />
       </View>
 
       {/* Bottom Polaroid Margin Info */}
       <View style={styles.bottomMarginRow}>
         <View style={styles.frameInfoGroup}>
-          <Text style={styles.frameTitleText}>KARE #{photo.frameNumber}</Text>
+          <Text style={styles.frameTitleText}>
+            {photo.captureMode === 'daily' ? 'GÜNLÜK BASKI' : `KARE #${photo.frameNumber || 1}`}
+          </Text>
           <Text style={styles.dateStampText}>{photo.date}</Text>
         </View>
 

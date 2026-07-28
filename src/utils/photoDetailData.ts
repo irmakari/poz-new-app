@@ -1,35 +1,84 @@
-export type PhotoStatus = 'developed' | 'locked';
+export type CaptureMode = 'daily' | 'film';
+export type PhotoStatus = 'developed' | 'locked' | 'developing' | 'unlocked';
+export type PhotoVisibility = 'immediate' | 'delayed';
 export type SceneType = 'sunset-seaside' | 'coffee-table' | 'city-street' | 'midnight-lights';
 
 export interface PhotoSong {
-  id: string;
+  id?: string;
   title: string;
   artist: string;
-  duration: string;
-  coverColor: string;
+  duration?: string;
+  coverColor?: string;
+  album?: string;
 }
 
 export interface PhotoEntry {
   id: string;
-  frameNumber: number;
-  frameCode: string;
+  captureMode?: CaptureMode;
+  status: PhotoStatus;
+  visibility?: PhotoVisibility;
+  frameNumber?: string | number | null;
+  frameCode?: string | null;
   date: string;
-  dateLabel: string;
-  time: string;
-  filmId: string;
-  filmTitle: string;
-  filmType: string;
-  serial: string;
+  dateLabel?: string;
+  time?: string;
+  filmId?: string | null;
+  filmTitle?: string | null;
+  filmType?: string;
+  serial?: string;
+  code?: string;
   location?: string;
   mood?: string;
   note?: string;
   song?: PhotoSong;
-  sceneType: SceneType;
-  status: PhotoStatus;
-  bgColors: [string, string];
+  sceneType?: SceneType | string;
+  bgColors?: [string, string];
+  photoUri?: string;
+  capturedAt?: string;
+  developedAt?: string | null;
 }
 
 export const MOCK_PHOTO_DATABASE: Record<string, PhotoEntry> = {
+  // Daily Mock Photos (for 27 July 2026 testing)
+  'daily-2026-07-27-01': {
+    id: 'daily-2026-07-27-01',
+    captureMode: 'daily',
+    status: 'developed',
+    visibility: 'immediate',
+    photoUri: undefined,
+    sceneType: 'coffee-table',
+    filmId: null,
+    filmTitle: null,
+    frameNumber: null,
+    date: '27 temmuz 2026',
+    time: '14:20',
+    location: 'kadıköy',
+    note: 'öğleden sonra kısa bir kahve molası verdim.',
+    mood: 'sakin',
+    capturedAt: '2026-07-27T14:20:00',
+    developedAt: '2026-07-27T14:20:00',
+    bgColors: ['#FFF1B0', '#FFD7EC'],
+  },
+  'daily-2026-07-27-02': {
+    id: 'daily-2026-07-27-02',
+    captureMode: 'daily',
+    status: 'developed',
+    visibility: 'immediate',
+    sceneType: 'city-street',
+    filmId: null,
+    filmTitle: null,
+    frameNumber: null,
+    date: '27 temmuz 2026',
+    time: '20:10',
+    location: 'moda caddesi',
+    song: {
+      title: 'seni dert etmeler',
+      artist: 'madrigal',
+    },
+    capturedAt: '2026-07-27T20:10:00',
+    developedAt: '2026-07-27T20:10:00',
+    bgColors: ['#CBEBFC', '#E3D7FF'],
+  },
   // 1. Primary Mock Photo (sunset-seaside)
   'summer-glow-13': {
     id: 'summer-glow-13',
@@ -188,3 +237,5 @@ export function getPhotoById(id?: string): PhotoEntry {
   }
   return MOCK_PHOTO_DATABASE[id];
 }
+
+export const initialPhotoEntries: PhotoEntry[] = Object.values(MOCK_PHOTO_DATABASE);

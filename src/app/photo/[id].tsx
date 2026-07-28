@@ -15,13 +15,24 @@ import { LockedPhotoCard } from '@/components/LockedPhotoCard';
 import { PozIcon } from '@/components/PozIcon';
 import { getPhotoById } from '@/utils/photoDetailData';
 
+import { useApp } from '@/context/AppContext';
+
 export default function PhotoDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [isFullNoteModalVisible, setIsFullNoteModalVisible] = useState(false);
 
-  const photo = getPhotoById(id);
+  const { photos, deletePhotoFrame } = useApp();
+
+  const photo = photos.find((p) => p.id === id) || photos[0];
+
+  const handleDeletePhoto = async () => {
+    if (photo) {
+      await deletePhotoFrame(photo.id);
+      router.back();
+    }
+  };
 
   // Invalid Photo State
   if (!photo) {
@@ -84,13 +95,44 @@ export default function PhotoDetailScreen() {
         <PhotoMetadataTickets photo={photo} />
 
         {/* Cassette Tape Song Label */}
-        <PhotoSongLabel song={photo.song} />
+        {photo.song && <PhotoSongLabel song={photo.song} />}
 
-        {/* Film Details Link Card */}
-        <PhotoFilmLink filmTitle={photo.filmTitle} filmId={photo.filmId} />
+        {/* Film Details Link Card or Day Link */}
+        {photo.captureMode === 'daily' ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/day/[date]', params: { date: '2026-07-27' } })}
+            style={{
+              backgroundColor: '#FFFDF9',
+              padding: 14,
+              borderRadius: BorderRadius.md,
+              borderWidth: 1,
+              borderColor: Colors.border,
+              marginVertical: Spacing.sm,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <PozIcon name="calendar" size={18} color={Colors.yellowDark} />
+              <View>
+                <Text style={{ fontSize: 13, fontFamily: Fonts.sansExtraBold, color: Colors.text }}>
+                  GÜNLÜK BASKI • ANILARA GİT
+                </Text>
+                <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.textSecondary }}>
+                  {photo.date} • {photo.time || '14:20'}
+                </Text>
+              </View>
+            </View>
+            <PozIcon name="arrow-right" size={16} color={Colors.text} />
+          </TouchableOpacity>
+        ) : (
+          <PhotoFilmLink filmTitle={photo.filmTitle || 'summer glow'} filmId={photo.filmId || 'summer-glow-july-2026'} />
+        )}
 
         {/* Edit / Share / Delete Action Area */}
-        <PhotoActionArea />
+        <PhotoActionArea onDelete={handleDeletePhoto} />
 
         {/* Full Journal Note Reader Modal */}
         <FullNoteModal

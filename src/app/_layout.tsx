@@ -12,6 +12,8 @@ import {
   NunitoSans_900Black,
 } from '@expo-google-fonts/nunito-sans';
 
+import { AppProvider } from '@/context/AppContext';
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -35,7 +37,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <AppProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -51,6 +53,6 @@ export default function RootLayout() {
         <Stack.Screen name="photo/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="capture-review" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </AppProvider>
   );
 }

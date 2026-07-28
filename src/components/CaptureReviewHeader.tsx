@@ -4,13 +4,17 @@ import { useRouter } from 'expo-router';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { PozIcon } from '@/components/PozIcon';
 
-export const CaptureReviewHeader: React.FC = () => {
+interface CaptureReviewHeaderProps {
+  title?: string;
+}
+
+export const CaptureReviewHeader: React.FC<CaptureReviewHeaderProps> = ({ title = 'kareyi tamamla' }) => {
   const router = useRouter();
 
   const handleInfoPress = () => {
     Alert.alert(
       'Kare Bilgisi',
-      'Bu kare henüz filmine eklenmedi. Detayları doldurup "kareyi filme ekle" butonuna basarak kaydedebilirsin.',
+      'Detayları doldurup aşağıdaki butona basarak kaydedebilirsin.',
       [{ text: 'Tamam', style: 'default' }]
     );
   };
@@ -26,7 +30,7 @@ export const CaptureReviewHeader: React.FC = () => {
         <Text style={styles.backArrowText}>‹</Text>
       </TouchableOpacity>
 
-      <Text style={styles.headerTitleText}>kareyi tamamla</Text>
+      <Text style={styles.headerTitleText}>{title}</Text>
 
       <TouchableOpacity
         activeOpacity={0.8}

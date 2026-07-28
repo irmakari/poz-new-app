@@ -20,7 +20,10 @@ import { MockViewfinder, FlashState, CameraFacing } from '@/components/MockViewf
 import { FilmInfoLabel } from '@/components/FilmInfoLabel';
 import { ShutterButton } from '@/components/ShutterButton';
 import { CaptureOverlay } from '@/components/CaptureOverlay';
+import { CaptureModeSelector } from '@/components/CaptureModeSelector';
 import { PozIcon } from '@/components/PozIcon';
+
+import { useApp } from '@/context/AppContext';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -28,11 +31,16 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
+  const { activeFilm, films, setActiveFilm, currentCaptureMode, selectCaptureMode } = useApp();
+
+  const remainingFrames = activeFilm ? (activeFilm.remainingFrames ?? 24) : 24;
+  const currentFrames = activeFilm ? (activeFilm.currentFrames ?? activeFilm.frameCount ?? 12) : 12;
+  const capturedFrameNum = currentFrames + 1;
+  const activeFilmsList = films.filter((f) => f.status === 'active');
+
   // Local Camera States
   const [flashState, setFlashState] = useState<FlashState>('auto');
   const [facing, setFacing] = useState<CameraFacing>('back');
-  const [remainingFrames, setRemainingFrames] = useState(24);
-  const [capturedFrameNum, setCapturedFrameNum] = useState(13);
   const [isCapturing, setIsCapturing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
@@ -54,7 +62,7 @@ export default function CameraScreen() {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
   };
 
-  // Shutter Press Handler
+  // Shutter Press Handler (Dual Mode)
   const handleShutterPress = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
@@ -66,11 +74,7 @@ export default function CameraScreen() {
         throw new Error('Fotoğraf çekilemedi');
       }
 
-      // 2. Decrement Frame Counter
-      const nextFrames = Math.max(0, remainingFrames - 1);
-      setRemainingFrames(nextFrames);
-
-      // 3. Viewfinder White Flash Animation
+      // 2. Viewfinder White Flash Animation
       Animated.sequence([
         Animated.timing(flashAnimOpacity, {
           toValue: 0.9,
@@ -84,7 +88,7 @@ export default function CameraScreen() {
         }),
       ]).start();
 
-      // 4. Show Capture Toast Feedback
+      // 3. Show Capture Toast Feedback
       setOverlayVisible(true);
       Animated.sequence([
         Animated.timing(toastAnimOpacity, {
@@ -102,18 +106,29 @@ export default function CameraScreen() {
         setOverlayVisible(false);
       });
 
-      // 5. Navigate to Capture Review Screen with local URI and params
+      // 4. Navigate according to current capture mode
       setTimeout(() => {
         setIsCapturing(false);
-        router.push({
-          pathname: '/capture-review',
-          params: {
-            photoUri: photo.uri,
-            frame: String(capturedFrameNum),
-            filmId: 'summer-glow-july-2026',
-          },
-        });
-        setCapturedFrameNum((prev) => prev + 1);
+        if (currentCaptureMode === 'daily') {
+          router.push({
+            pathname: '/daily-capture-review',
+            params: {
+              photoUri: photo.uri,
+              capturedAt: new Date().toISOString(),
+              mode: 'daily',
+            },
+          });
+        } else {
+          router.push({
+            pathname: '/capture-review',
+            params: {
+              photoUri: photo.uri,
+              frame: String(capturedFrameNum),
+              filmId: activeFilm ? activeFilm.id : 'summer-glow-july-2026',
+              mode: 'film',
+            },
+          });
+        }
       }, 400);
     } catch (error) {
       setIsCapturing(false);
@@ -188,8 +203,21 @@ export default function CameraScreen() {
             <Text style={styles.screwText}>+</Text>
           </View>
 
+          {/* Mode Selector Toggle: Günlük vs Film */}
+          <CaptureModeSelector
+            currentMode={currentCaptureMode}
+            onSelectMode={selectCaptureMode}
+          />
+
           {/* Header Film & Frame Counter Bar */}
-          <CameraHeader remainingFrames={remainingFrames} />
+          {currentCaptureMode === 'film' ? (
+            <CameraHeader remainingFrames={remainingFrames} />
+          ) : (
+            <View style={styles.dailyHeaderBar}>
+              <PozIcon name="photo" size={14} color={Colors.yellow} />
+              <Text style={styles.dailyHeaderText}>bugünün fotoğrafı • çek, hemen gör</Text>
+            </View>
+          )}
 
           {/* Viewfinder Window with Real CameraView when focused */}
           <MockViewfinder
@@ -200,8 +228,47 @@ export default function CameraScreen() {
             flashAnimOpacity={flashAnimOpacity}
           />
 
-          {/* Film Info Label Under Viewfinder */}
-          <FilmInfoLabel frameCount={36 - remainingFrames} remainingFrames={remainingFrames} />
+          {/* Mode Info Label Under Viewfinder */}
+          {currentCaptureMode === 'film' ? (
+            <>
+              <FilmInfoLabel frameCount={(activeFilm?.totalFrames || 36) - remainingFrames} remainingFrames={remainingFrames} />
+              
+              {/* Active Film Roll Selector if multiple films */}
+              {activeFilmsList.length > 1 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 6 }}>
+                  <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 4 }}>
+                    {activeFilmsList.map((f) => (
+                      <TouchableOpacity
+                        key={f.id}
+                        onPress={() => setActiveFilm(f.id)}
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 4,
+                          backgroundColor: f.id === activeFilm?.id ? Colors.lavender : '#2A2436',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 10,
+                            fontFamily: Fonts.mono,
+                            color: f.id === activeFilm?.id ? '#181520' : '#FFFDF6',
+                            fontWeight: '700',
+                          }}
+                        >
+                          {f.title} ({f.totalFrames - (f.currentFrames || 0)})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              )}
+            </>
+          ) : (
+            <View style={styles.dailyInfoBox}>
+              <Text style={styles.dailyInfoText}>günlük mod • fotoğraf anında fotoğraf albümüne eklenir</Text>
+            </View>
+          )}
 
           {/* Camera Controls Bar */}
           <View style={styles.controlsRow}>
@@ -252,7 +319,10 @@ export default function CameraScreen() {
           {/* Bottom Information Subtext */}
           <View style={styles.bottomInfoGroup}>
             <Text style={styles.analogNoticeText}>
-              çektiğin kareyi film açılana kadar göremeyeceksin.
+              çektiğin kareyi banyo kilitlidir.
+            </Text>
+            <Text style={styles.testHintBadgeText}>
+              ✨ Fotoğrafı çektikten sonra karttaki "Efekt Testi" sekmesinden 35mm filtre sonuçlarını canlı deneyebilirsin!
             </Text>
 
             <Text style={styles.remainingCounterSubtext}>
@@ -407,6 +477,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: Fonts.sans,
     color: 'rgba(255, 255, 255, 0.65)',
+    textAlign: 'center',
+  },
+  testHintBadgeText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.yellow,
+    opacity: 0.85,
+    marginTop: 2,
+  },
+  dailyHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2A2436',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.sm,
+    marginVertical: Spacing.xs,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dailyHeaderText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: '#FFF1B0',
+    fontWeight: '700',
+  },
+  dailyInfoBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginVertical: 4,
+  },
+  dailyInfoText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
   },
   remainingCounterSubtext: {

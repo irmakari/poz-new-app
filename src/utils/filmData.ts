@@ -39,6 +39,14 @@ export interface FilmItem {
   type: string; // "35mm · iso 400"
   iso: number;
   frameCount: number;
+  currentFrames?: number;
+  remainingFrames?: number;
+  isoTag?: string;
+  typeTag?: string;
+  badgeLabel?: string;
+  badgeColor?: string;
+  badgeDarkColor?: string;
+  description?: string;
   totalFrames: number;
   status: FilmStatus;
   color: string; // main card color
@@ -50,6 +58,7 @@ export interface FilmItem {
   remainingTime?: string; // for developing films
   startDate?: string;
   endDate?: string;
+  createdDate?: string;
   developedDate?: string;
   summaryMessage?: string;
   purpose?: string;
@@ -351,3 +360,5 @@ export function addNewFilm(film: FilmItem): void {
   // Prepend to MOCK_FILMS array so it appears at top of Films screen
   MOCK_FILMS.unshift(film);
 }
+
+export const initialFilmList: FilmItem[] = MOCK_FILMS;

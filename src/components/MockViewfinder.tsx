@@ -5,6 +5,7 @@ import { Fonts, BorderRadius } from '@/constants/theme';
 import { FocusFrame } from '@/components/FocusFrame';
 import { GrainOverlay } from '@/components/GrainOverlay';
 import { PozIcon } from '@/components/PozIcon';
+import { getFormattedTodayStamp } from '@/utils/dateUtils';
 
 export type FlashState = 'auto' | 'on' | 'off';
 export type CameraFacing = 'back' | 'front';
@@ -84,7 +85,7 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
         </View>
 
         <View style={styles.overlayBottomRow}>
-          <Text style={styles.dateStampOverlay}>27.07.26</Text>
+          <Text style={styles.dateStampOverlay}>{getFormattedTodayStamp()}</Text>
 
           <View style={styles.facingBadge}>
             <PozIcon name="camera" size={10} color="#FFFDF6" />

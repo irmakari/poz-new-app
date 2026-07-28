@@ -20,17 +20,49 @@ import { MoodSticker } from '@/components/MoodSticker';
 import { DayDetailsReceipt } from '@/components/DayDetailsReceipt';
 import { EmptyDayView } from '@/components/EmptyDayView';
 import { PozIcon } from '@/components/PozIcon';
+import { useApp } from '@/context/AppContext';
 import { DAY_ENTRIES } from '@/utils/dayData';
 
 export default function DayDetailScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const dateStr = date || '2026-07-27';
-  const entry = DAY_ENTRIES[dateStr];
+
+  const { dailyNotes, photos, deleteDailyNote } = useApp();
+
+  const dateMatchStr = dateStr.includes('-') ? dateStr : '2026-07-27';
+  const dayDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && (p.date.includes(dateStr) || p.date.includes('27 temmuz')));
+  const dayFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && (p.date.includes(dateStr) || p.date.includes('27 temmuz')));
+
+  const mockEntry = DAY_ENTRIES[dateStr];
+  const storedDailyNote = dailyNotes[dateStr];
+
+  const hasAnyContent = Boolean(
+    storedDailyNote?.note ||
+    dayDailyPhotos.length > 0 ||
+    dayFilmPhotos.length > 0 ||
+    mockEntry
+  );
+
+  const entry = storedDailyNote || mockEntry
+    ? {
+        dayTitle: dateMatchStr === '2026-07-27' ? '27 temmuz' : 'bugün',
+        daySubTitle: dateMatchStr === '2026-07-27' ? 'pazartesi · 2026' : '2026',
+        stampText: dateMatchStr === '2026-07-27' ? '27 JUL 2026' : 'TODAY',
+        summaryText: storedDailyNote?.note || mockEntry?.summaryText || 'bugüne ait anılar ve kareler.',
+        note: storedDailyNote?.note
+          ? { text: storedDailyNote.note, metaText: storedDailyNote.timestamp || '22:45 • ev' }
+          : mockEntry?.note,
+        song: storedDailyNote?.song
+          ? { title: storedDailyNote.song.title, artist: storedDailyNote.song.artist, duration: '3:42' }
+          : mockEntry?.song,
+        mood: storedDailyNote?.mood || mockEntry?.mood,
+      }
+    : null;
 
   const handleEditAll = () => {
     Alert.alert(
       'Anılarını Düzenle',
-      'Düzenleme özelliği yakında eklenecek.',
+      'Ana sayfadaki not kartına basarak günün notunu hızlıca güncelleyebilirsin.',
       [{ text: 'Tamam', style: 'default' }]
     );
   };
@@ -38,8 +70,18 @@ export default function DayDetailScreen() {
   const handleDelete = () => {
     Alert.alert(
       'Anıyı Sil',
-      'Silme özelliği henüz aktif değil.',
-      [{ text: 'Tamam', style: 'default' }]
+      'Bu güne ait notu silmek istediğine emin misin?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Anıyı Sil',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteDailyNote(dateStr);
+            Alert.alert('Silindi', 'Günün anısı silindi.');
+          },
+        },
+      ]
     );
   };
 
@@ -100,19 +142,28 @@ export default function DayDetailScreen() {
 
               {/* Day Summary Ticket Chips */}
               <View style={styles.chipsRow}>
-                {entry.photos ? (
-                  <View style={[styles.ticketChip, { backgroundColor: Colors.lavender, transform: [{ rotate: '-1.5deg' }] }]}>
-                    <PozIcon name="photo" size={13} color={Colors.lavenderDark} />
+                {dayDailyPhotos.length > 0 ? (
+                  <View style={[styles.ticketChip, { backgroundColor: Colors.yellow, transform: [{ rotate: '-1.5deg' }] }]}>
+                    <PozIcon name="photo" size={13} color={Colors.yellowDark} />
+                    <Text style={[styles.chipText, { color: Colors.yellowDark }]}>
+                      {dayDailyPhotos.length} FOTOĞRAF
+                    </Text>
+                  </View>
+                ) : null}
+
+                {dayFilmPhotos.length > 0 ? (
+                  <View style={[styles.ticketChip, { backgroundColor: Colors.lavender, transform: [{ rotate: '1deg' }] }]}>
+                    <PozIcon name="films" size={13} color={Colors.lavenderDark} />
                     <Text style={[styles.chipText, { color: Colors.lavenderDark }]}>
-                      {entry.photos.length} KARE
+                      {dayFilmPhotos.length} FİLM KARESI
                     </Text>
                   </View>
                 ) : null}
 
                 {entry.note ? (
-                  <View style={[styles.ticketChip, { backgroundColor: Colors.yellow, transform: [{ rotate: '1deg' }] }]}>
-                    <PozIcon name="mail" size={13} color={Colors.yellowDark} />
-                    <Text style={[styles.chipText, { color: Colors.yellowDark }]}>1 NOT</Text>
+                  <View style={[styles.ticketChip, { backgroundColor: '#FFFDF9', transform: [{ rotate: '1deg' }] }]}>
+                    <PozIcon name="mail" size={13} color={Colors.text} />
+                    <Text style={[styles.chipText, { color: Colors.text }]}>1 NOT</Text>
                   </View>
                 ) : null}
 
@@ -136,26 +187,80 @@ export default function DayDetailScreen() {
           ) : null}
         </View>
 
-        {/* If no mock entry for this date, show EmptyDayView */}
-        {!entry ? (
+        {/* If no entry or content for this date, show EmptyDayView */}
+        {!hasAnyContent ? (
           <EmptyDayView dateString={dateStr} />
         ) : (
           <>
-            {/* Photo Prints Section */}
-            {entry.photos && entry.photos.length > 0 ? (
-              <View style={styles.sectionContainer}>
-                <SectionTitle title="bugünün kareleri" stamp={`${entry.photos.length} EXP`} />
+            {/* 1. BUGÜNÜN FOTOĞRAFLARI (DAILY PHOTOS) SECTION */}
+            <View style={styles.sectionContainer}>
+              <SectionTitle title="bugünün fotoğrafları" stamp={`${dayDailyPhotos.length} BASKI`} />
 
+              {dayDailyPhotos.length > 0 ? (
                 <View style={styles.photosRow}>
-                  {entry.photos.map((item) => (
+                  {dayDailyPhotos.map((item) => (
                     <PhotoPrint key={item.id} item={item} />
                   ))}
                 </View>
-              </View>
-            ) : null}
+              ) : (
+                <View style={styles.emptySectionBox}>
+                  <Text style={styles.emptySectionText}>bugün hemen açılan bir fotoğraf eklemedin.</Text>
+                </View>
+              )}
+            </View>
+
+            {/* 2. BUGÜNÜN FİLM KARELERİ (FILM FRAMES) SECTION */}
+            <View style={styles.sectionContainer}>
+              <SectionTitle title="bugünün film kareleri" stamp={`${dayFilmPhotos.length} KARE`} />
+
+              {dayFilmPhotos.length > 0 ? (
+                <View style={styles.filmStripCard}>
+                  {/* Sprocket Perforations Top */}
+                  <View style={styles.sprocketRow}>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <View key={`t-${i}`} style={styles.sprocketHole} />
+                    ))}
+                  </View>
+
+                  <View style={styles.filmFramesGrid}>
+                    {dayFilmPhotos.map((photoItem) => (
+                      <View key={photoItem.id} style={styles.filmNegativeCell}>
+                        <View style={styles.negativeHeader}>
+                          <Text style={styles.filmNameTag}>{photoItem.filmTitle || 'SUMMER GLOW'}</Text>
+                          <Text style={styles.frameCodeTag}>{photoItem.code || `${photoItem.frameNumber || 13}A`}</Text>
+                        </View>
+
+                        {photoItem.status === 'locked' ? (
+                          <View style={styles.lockedCellBox}>
+                            <PozIcon name="lock" size={20} color="rgba(255, 255, 255, 0.5)" />
+                            <Text style={styles.lockedCellText}>LOCKED</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.developedCellBox}>
+                            <PozIcon name="photo" size={20} color={Colors.lavender} />
+                            <Text style={styles.developedCellText}>DEVELOPED</Text>
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Sprocket Perforations Bottom */}
+                  <View style={styles.sprocketRow}>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <View key={`b-${i}`} style={styles.sprocketHole} />
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.emptySectionBox}>
+                  <Text style={styles.emptySectionText}>bugün filme kare eklemedin.</Text>
+                </View>
+              )}
+            </View>
 
             {/* Journal Note Section */}
-            {entry.note ? (
+            {entry?.note ? (
               <View style={styles.sectionContainer}>
                 <JournalNoteCard
                   text={entry.note.text}
@@ -165,7 +270,7 @@ export default function DayDetailScreen() {
             ) : null}
 
             {/* Song Section */}
-            {entry.song ? (
+            {entry?.song ? (
               <View style={styles.sectionContainer}>
                 <SongTicket
                   title={entry.song.title}
@@ -176,24 +281,24 @@ export default function DayDetailScreen() {
             ) : null}
 
             {/* Mood Section */}
-            {entry.mood ? (
+            {entry?.mood ? (
               <View style={styles.sectionContainer}>
                 <MoodSticker
                   mood={entry.mood}
-                  moodSubtext={entry.moodSubtext}
+                  moodSubtext={(entry as any).moodSubtext || '★ GOOD VIBES'}
                 />
               </View>
             ) : null}
 
             {/* Day Details Receipt Section */}
-            {entry.details ? (
+            {entry && (entry as any).details ? (
               <View style={styles.sectionContainer}>
                 <DayDetailsReceipt
-                  timeRange={entry.details.timeRange}
-                  location={entry.details.location}
-                  film={entry.details.film}
-                  frames={entry.details.frames}
-                  weather={entry.details.weather}
+                  timeRange={(entry as any).details.timeRange}
+                  location={(entry as any).details.location}
+                  film={(entry as any).details.film}
+                  frames={(entry as any).details.frames}
+                  weather={(entry as any).details.weather}
                 />
               </View>
             ) : null}
@@ -334,6 +439,108 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(229, 72, 72, 0.25)',
+    borderColor: Colors.border,
+  },
+  emptySectionBox: {
+    backgroundColor: '#FFFDF9',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(28, 26, 36, 0.08)',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: Spacing.xs,
+  },
+  emptySectionText: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  filmStripCard: {
+    backgroundColor: '#1C1A24',
+    borderRadius: BorderRadius.md,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginVertical: Spacing.xs,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sprocketRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  sprocketHole: {
+    width: 10,
+    height: 7,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  filmFramesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginVertical: 6,
+    justifyContent: 'flex-start',
+  },
+  filmNegativeCell: {
+    width: '48%',
+    height: 100,
+    backgroundColor: '#252132',
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 8,
+    justifyContent: 'space-between',
+  },
+  negativeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filmNameTag: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    color: Colors.lavender,
+    fontWeight: '700',
+  },
+  frameCodeTag: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    color: Colors.stampRed,
+    fontWeight: '800',
+  },
+  lockedCellBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  lockedCellText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  developedCellBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  developedCellText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.lavender,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

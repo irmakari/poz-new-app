@@ -12,16 +12,18 @@ import { ArchiveFilmCard } from '@/components/ArchiveFilmCard';
 import { NewFilmCard } from '@/components/NewFilmCard';
 import { EmptyFilterView } from '@/components/EmptyFilterView';
 import { SectionTitle } from '@/components/SectionTitle';
-import { MOCK_FILMS, FilmItem } from '@/utils/filmData';
+import { FilmItem } from '@/utils/filmData';
+import { useApp } from '@/context/AppContext';
 
 export default function FilmsScreen() {
   const router = useRouter();
   const [filterCategory, setFilterCategory] = useState<FilterCategory>('all');
+  const { films, activeFilm: contextActiveFilm } = useApp();
 
-  const activeFilm = MOCK_FILMS.find((f) => f.status === 'active') || MOCK_FILMS[0];
-  const developingFilm = MOCK_FILMS.find((f) => f.status === 'developing');
-  const completedFilms = MOCK_FILMS.filter((f) => f.status === 'completed');
-  const archiveFilms = MOCK_FILMS.filter((f) => f.id.startsWith('film-arch'));
+  const activeFilm = contextActiveFilm || films.find((f) => f.status === 'active') || films[0];
+  const developingFilm = films.find((f) => f.status === 'developing');
+  const completedFilms = films.filter((f) => f.status === 'completed');
+  const archiveFilms = films.filter((f) => f.id.startsWith('film-arch') || f.status === 'completed');
 
   const handlePressFilm = (film: FilmItem) => {
     router.push({

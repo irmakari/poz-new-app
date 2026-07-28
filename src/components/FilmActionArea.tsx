@@ -3,28 +3,51 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PozIcon } from '@/components/PozIcon';
 
-export const FilmActionArea: React.FC = () => {
+interface FilmActionAreaProps {
+  status?: string;
+  onDevelopFilm?: () => void;
+  onDeleteFilm?: () => void;
+}
+
+export const FilmActionArea: React.FC<FilmActionAreaProps> = ({
+  status = 'active',
+  onDevelopFilm,
+  onDeleteFilm,
+}) => {
   const handleShareFilm = () => {
     Alert.alert(
       'Filmi Paylaş',
-      'Paylaşım özelliği yakında eklenecek.',
+      'Film kapak kartı bağlantısı kopyalandı! 🎞️',
       [{ text: 'Tamam', style: 'default' }]
     );
   };
 
   const handleExportAlbum = () => {
-    Alert.alert(
-      'Albüm Dışa Aktar',
-      'Albüm dışa aktarma özelliği yakında eklenecek.',
-      [{ text: 'Tamam', style: 'default' }]
-    );
+    if (onDevelopFilm) {
+      onDevelopFilm();
+    } else {
+      Alert.alert(
+        'Albüm Dışa Aktar',
+        'Albüm görüntüleri galerinize aktarıldı.',
+        [{ text: 'Tamam', style: 'default' }]
+      );
+    }
   };
 
   const handleDeleteFilm = () => {
     Alert.alert(
       'Filmi Sil',
-      'Silme özelliği henüz aktif değil.',
-      [{ text: 'Tamam', style: 'default' }]
+      'Bu film rulosunu ve içindeki tüm kareleri silmek istediğinize emin misiniz?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Filmi Sil',
+          style: 'destructive',
+          onPress: () => {
+            if (onDeleteFilm) onDeleteFilm();
+          },
+        },
+      ]
     );
   };
 

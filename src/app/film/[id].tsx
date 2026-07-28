@@ -17,13 +17,30 @@ import { FilmDetailsReceipt } from '@/components/FilmDetailsReceipt';
 import { FilmActionArea } from '@/components/FilmActionArea';
 import { EmptyFilmView } from '@/components/EmptyFilmView';
 import { SectionTitle } from '@/components/SectionTitle';
-import { getFilmById } from '@/utils/filmData';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/context/AppContext';
 
 export default function FilmDetailScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const film = getFilmById(id);
+  const { films, developFilm, deleteFilm } = useApp();
+
+  const film = films.find((f) => f.id === id) || films[0];
 
   const [viewMode, setViewMode] = useState<ViewMode>('contact');
+
+  const handleDevelop = async () => {
+    if (film) {
+      await developFilm(film.id);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (film) {
+      await deleteFilm(film.id);
+      router.back();
+    }
+  };
 
   if (!film) {
     return (
@@ -49,7 +66,7 @@ export default function FilmDetailScreen() {
         {/* Film Status Process Stamp */}
         <FilmStatusStamp
           status={film.status}
-          frameCount={film.frameCount}
+          frameCount={film.frameCount || film.currentFrames}
           totalFrames={film.totalFrames}
           remainingTime={film.remainingTime}
         />
@@ -83,13 +100,17 @@ export default function FilmDetailScreen() {
         <MonthSongsSection songs={film.songs} />
 
         {/* Month Moods Section */}
-        <MoodStickerGroup moods={film.moods} monthName={film.dateLabel.split(' ')[0]} />
+        <MoodStickerGroup moods={film.moods} monthName={film.dateLabel ? film.dateLabel.split(' ')[0] : 'temmuz'} />
 
         {/* Photo Lab Receipt Specs */}
         <FilmDetailsReceipt film={film} />
 
         {/* Actions Area */}
-        <FilmActionArea />
+        <FilmActionArea
+          status={film.status}
+          onDevelopFilm={handleDevelop}
+          onDeleteFilm={handleDelete}
+        />
       </ScrollView>
     </SafeAreaView>
   );

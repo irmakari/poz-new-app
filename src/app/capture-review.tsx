@@ -19,9 +19,14 @@ import { FrameBackPreview } from '@/components/FrameBackPreview';
 import { SaveFrameButton } from '@/components/SaveFrameButton';
 import { MockSongItem } from '@/utils/captureReviewData';
 
+import { useApp } from '@/context/AppContext';
+import { getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
+
 export default function CaptureReviewScreen() {
   const { photoUri, frame = '13', filmId = 'summer-glow-july-2026' } =
     useLocalSearchParams<{ photoUri?: string; frame: string; filmId: string }>();
+
+  const { addPhotoFrame } = useApp();
 
   // Local Form States
   const [note, setNote] = useState('');
@@ -35,6 +40,16 @@ export default function CaptureReviewScreen() {
 
   const isFormEmpty =
     !note.trim() && !selectedSong && !selectedLocation && selectedMood === 'huzurlu';
+
+  const handleSavePhotoFrame = async () => {
+    await addPhotoFrame({
+      photoUri,
+      note: note.trim(),
+      song: selectedSong ? { title: selectedSong.title, artist: selectedSong.artist } : null,
+      mood: customMood.trim() || selectedMood,
+      location: selectedLocation,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -50,13 +65,14 @@ export default function CaptureReviewScreen() {
           {/* Top Navigation */}
           <CaptureReviewHeader />
 
-          {/* Unexposed Closed Frame Hero Section */}
+          {/* Unexposed Closed Frame / Live Effect Preview Hero Section */}
           <HiddenFrameCard
             frameNumber={frame}
             filmName={filmId.includes('summer') ? 'summer glow' : filmId}
             serialNumber={`SG-0726-0${frame}`}
-            dateStr="27 temmuz 2026"
-            timeStr="18:42"
+            dateStr={getFormattedTodayFull()}
+            timeStr={getFormattedTime()}
+            photoUri={photoUri}
           />
 
           {/* Daily Journal Note Input */}
@@ -102,7 +118,11 @@ export default function CaptureReviewScreen() {
           />
 
           {/* Save & Cancel Flow Action */}
-          <SaveFrameButton frameNumber={frame} isFormEmpty={isFormEmpty} />
+          <SaveFrameButton
+            frameNumber={frame}
+            isFormEmpty={isFormEmpty}
+            onSave={handleSavePhotoFrame}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -9,18 +9,12 @@ interface DayItem {
   isToday?: boolean;
 }
 
-const WEEK_DAYS: DayItem[] = [
-  { dayName: 'Pzt', dayNumber: 27, rotation: '-2deg', isToday: true },
-  { dayName: 'Sal', dayNumber: 28, rotation: '1.5deg' },
-  { dayName: 'Çar', dayNumber: 29, rotation: '-1deg' },
-  { dayName: 'Per', dayNumber: 30, rotation: '2deg' },
-  { dayName: 'Cum', dayNumber: 31, rotation: '-1.8deg' },
-  { dayName: 'Cmt', dayNumber: 1, rotation: '1.2deg' },
-  { dayName: 'Paz', dayNumber: 2, rotation: '-2.2deg' },
-];
+import { getWeekDays } from '@/utils/dateUtils';
 
 export const WeekSelector: React.FC = () => {
-  const [selectedDay, setSelectedDay] = React.useState<number>(27);
+  const weekDays = React.useMemo(() => getWeekDays(), []);
+  const todayNum = new Date().getDate();
+  const [selectedDay, setSelectedDay] = React.useState<number>(todayNum);
 
   return (
     <View style={styles.container}>
@@ -29,7 +23,7 @@ export const WeekSelector: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {WEEK_DAYS.map((item) => {
+        {weekDays.map((item) => {
           const isSelected = item.dayNumber === selectedDay;
           return (
             <TouchableOpacity
