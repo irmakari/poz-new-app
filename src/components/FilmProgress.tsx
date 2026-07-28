@@ -56,9 +56,6 @@ export const FilmProgress: React.FC<FilmProgressProps> = ({
         {/* Lower Perforations */}
         {renderSprockets()}
       </View>
-
-      {/* Overhanging Film End Tail */}
-      <View style={styles.filmTailNotch} />
     </View>
   );
 };
@@ -68,7 +65,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 12,
-    marginRight: -20, // Overhangs slightly off the card's right edge
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

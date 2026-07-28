@@ -48,7 +48,7 @@ export default function HomeScreen() {
 
         {/* Hero Card: Analog Film Envelope / Photo Sleeve */}
         <ScrapbookCard
-          bgColor={Colors.lavender}
+          bgColor={Colors.blue}
           rotation="-1.2deg"
           hasTape="top-right"
           tapeColor={Colors.tapeDefault}
@@ -61,7 +61,7 @@ export default function HomeScreen() {
 
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroTitleGroup}>
-              <PaperStamp label="35MM ISO 400" color={Colors.lavenderDark} rotation="-3deg" />
+              <PaperStamp label="35MM ISO 400" color={Colors.blueDark} rotation="-3deg" />
               <Text style={styles.heroSubHeader}>bugünün filmi</Text>
             </View>
 
@@ -144,12 +144,12 @@ export default function HomeScreen() {
 
           {/* Right Column */}
           <View style={styles.collageColumnRight}>
-            {/* 2. Mat Blue Cardstock with Stacked Photo Prints */}
+            {/* 2. Mat Lavender Cardstock with Stacked Photo Prints */}
             <ScrapbookCard
-              bgColor={Colors.blue}
+              bgColor={Colors.lavender}
               rotation="1.6deg"
               hasTape="top-right"
-              tapeColor={Colors.tapeLavender}
+              tapeColor={Colors.tapeBlue}
               padding={Spacing.md}
               style={styles.bluePhotosCard}
             >
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     left: 40,
     right: 40,
     height: 1,
-    backgroundColor: 'rgba(143, 102, 227, 0.3)',
+    backgroundColor: 'rgba(43, 131, 186, 0.3)',
   },
   heroHeaderRow: {
     flexDirection: 'row',
@@ -382,14 +382,14 @@ const styles = StyleSheet.create({
   },
   remainingBadge: {
     fontSize: 10,
-    color: Colors.lavenderDark,
+    color: Colors.blueDark,
     fontFamily: Fonts.mono,
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(143, 102, 227, 0.2)',
+    borderColor: 'rgba(43, 131, 186, 0.2)',
   },
 
   /* Collage Staggered Grid */
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   photoCountBadge: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: Colors.blueDark,
+    color: Colors.lavenderDark,
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     paddingHorizontal: 6,
     paddingVertical: 2,

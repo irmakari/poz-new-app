@@ -20,10 +20,10 @@ export const PaperTextureOverlay: React.FC = () => {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 20,
     overflow: 'hidden',
-    zIndex: 1,
+    zIndex: 0,
   },
   grainLine1: {
     position: 'absolute',
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.035)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
   },
   grainLine2: {
     position: 'absolute',
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   grainLine3: {
     position: 'absolute',
@@ -47,13 +47,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.025)',
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
   },
   speck: {
     position: 'absolute',
     width: 2,
     height: 2,
     borderRadius: 1,
-    backgroundColor: 'rgba(28, 26, 36, 0.07)',
+    backgroundColor: 'rgba(28, 26, 36, 0.05)',
   },
 });
