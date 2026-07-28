@@ -155,7 +155,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   grainTextureOverlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.06)',
   },

@@ -22,10 +22,10 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({ profil
 
   return (
     <ScrapbookCard
-      bgColor={Colors.blue}
+      bgColor={Colors.deepNavy}
       rotation="-1deg"
       hasTape="top-left"
-      tapeColor={Colors.tapeDefault}
+      tapeColor={Colors.tapeBlue}
       padding={Spacing.lg}
       style={styles.cardContainer}
     >
@@ -33,7 +33,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({ profil
 
       {/* Header Stamp & Serial Row */}
       <View style={styles.headerRow}>
-        <PaperStamp label="MEMBER PASS" color={Colors.blueDark} rotation="2deg" />
+        <PaperStamp label="MEMBER PASS" color={Colors.stampRed} rotation="2deg" />
         <Text style={styles.serialText}>{profile.serial}</Text>
       </View>
 
@@ -69,7 +69,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({ profil
         onPress={handleEditProfile}
         style={styles.editButton}
       >
-        <PozIcon name="sparkle" size={14} color="#FFFDF9" />
+        <PozIcon name="sparkle" size={14} color="#F4ECE2" />
         <Text style={styles.editButtonText}>profili düzenle</Text>
       </TouchableOpacity>
     </ScrapbookCard>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     left: 40,
     right: 40,
     height: 1,
-    backgroundColor: 'rgba(43, 131, 186, 0.25)',
+    backgroundColor: 'rgba(143, 168, 184, 0.25)',
   },
   headerRow: {
     flexDirection: 'row',
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   serialText: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: Fonts.mono,
-    color: Colors.blueDark,
+    color: '#A8A0AD',
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
   },
   identityRow: {
     flexDirection: 'row',
@@ -113,22 +113,21 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   nameText: {
-    fontSize: 26,
-    fontFamily: Fonts.serif,
-    fontWeight: '900',
-    color: Colors.text,
-    letterSpacing: -0.5,
+    fontSize: 24,
+    fontFamily: Fonts.sansBlack,
+    color: '#F4ECE2',
+    letterSpacing: -0.6,
   },
   usernameText: {
     fontSize: 13,
     fontFamily: Fonts.mono,
-    color: Colors.blueDark,
+    color: '#8FA8B8',
     fontWeight: '700',
   },
   bioText: {
     fontSize: 12,
     fontFamily: Fonts.sansMedium,
-    color: Colors.textSecondary,
+    color: '#A8A0AD',
     fontStyle: 'italic',
     marginTop: 2,
     lineHeight: 16,
@@ -139,52 +138,49 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 4,
   },
-  metaText: {
-    fontSize: 10,
-    fontFamily: Fonts.mono,
-    color: Colors.textMuted,
+  metaTag: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   metaDaysTag: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
-  },
-  metaTextTag: {
-    fontSize: 9,
-    fontFamily: Fonts.mono,
-    color: Colors.blueDark,
-    fontWeight: '700',
-  },
-  metaTag: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   metaTagText: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontFamily: Fonts.mono,
-    color: Colors.blueDark,
+    color: '#F4ECE2',
     fontWeight: '800',
+    letterSpacing: 0.5,
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#181520',
+    backgroundColor: Colors.burgundy,
     height: 44,
     borderRadius: BorderRadius.md,
     gap: 6,
-    shadowColor: Colors.text,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 3,
   },
   editButtonText: {
     fontSize: 13,
     fontFamily: Fonts.sansBold,
-    color: '#FFFDF9',
+    color: '#F4ECE2',
+    letterSpacing: 0.3,
   },
 });

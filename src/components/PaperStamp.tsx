@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ViewStyle, Animated } from 'react-native';
 import { Colors, Fonts } from '@/constants/theme';
 
 interface PaperStampProps {
@@ -15,11 +15,33 @@ export const PaperStamp: React.FC<PaperStampProps> = ({
   rotation = '-3.5deg',
   style,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1.12)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0.92,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [label]);
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.stampContainer,
-        { borderColor: color, transform: [{ rotate: rotation }] },
+        {
+          borderColor: color,
+          opacity: opacityAnim,
+          transform: [{ rotate: rotation }, { scale: scaleAnim }],
+        },
         style,
       ]}
     >
@@ -29,7 +51,7 @@ export const PaperStamp: React.FC<PaperStampProps> = ({
 
       {/* Ink imperfection spot */}
       <View style={[styles.inkSpot, { backgroundColor: color }]} />
-    </View>
+    </Animated.View>
   );
 };
 
@@ -44,7 +66,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 1,
-    opacity: 0.9,
   },
   innerFrame: {
     borderWidth: 1,
@@ -58,15 +79,14 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '800',
     letterSpacing: 1.4,
-    opacity: 0.88,
   },
   inkSpot: {
     position: 'absolute',
     top: 2,
     right: 3,
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
+    width: 2.5,
+    height: 2.5,
+    borderRadius: 1.25,
     opacity: 0.4,
   },
 });

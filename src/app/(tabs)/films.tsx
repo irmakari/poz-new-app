@@ -55,7 +55,7 @@ export default function FilmsScreen() {
           <>
             {/* Completed Films Horizontal Scroll Carousel */}
             <View style={styles.sectionMargin}>
-              <SectionTitle title="tamamlanan filmler" stamp="ROLLS" />
+              <SectionTitle title="tamamlanan filmler" categoryLabel="FILM ROLLS" code="ROLL-35MM" stamp="COMPLETED" />
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -74,7 +74,7 @@ export default function FilmsScreen() {
             {/* Developing Film Section (Karanlık Odada) */}
             {developingFilm && (
               <View style={styles.sectionMargin}>
-                <SectionTitle title="karanlık odada" stamp="DARKROOM" />
+                <SectionTitle title="karanlık odada" categoryLabel="DARKROOM" code="LAB-PROCESS" stamp="DEVELOPING" />
                 <DevelopingFilmCard
                   film={developingFilm}
                   onPressFilm={handlePressFilm}
@@ -84,7 +84,7 @@ export default function FilmsScreen() {
 
             {/* Archive 2-Column Grid */}
             <View style={styles.sectionMargin}>
-              <SectionTitle title="arşiv" stamp="35MM VAULT" />
+              <SectionTitle title="arşiv" categoryLabel="35MM VAULT" code="VAULT-0726" stamp="ARCHIVED" />
               <View style={styles.archiveGridContainer}>
                 {archiveFilms.map((film) => (
                   <View key={film.id} style={styles.gridCell}>

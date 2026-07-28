@@ -5,64 +5,95 @@ import { PaperStamp } from './PaperStamp';
 
 interface SectionTitleProps {
   title: string;
+  categoryLabel?: string;
+  code?: string;
   stamp?: string;
   style?: ViewStyle;
 }
 
 export const SectionTitle: React.FC<SectionTitleProps> = ({
   title,
+  categoryLabel,
+  code,
   stamp,
   style,
 }) => {
+  const defaultCategory = categoryLabel || 'ARCHIVE LOG';
+
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.titleWrapper}>
-        <Text style={styles.titleText}>{title}</Text>
+      <View style={styles.contentColumn}>
+        {/* Top Spaced Mono Category Tag */}
+        <View style={styles.topMetaRow}>
+          <Text style={styles.monoCategoryText}>{defaultCategory}</Text>
+          {code && <Text style={styles.monoCodeText}>{code}</Text>}
+        </View>
 
-        {/* Highlighter Streak / Torn Paper Accent */}
-        <View style={styles.highlighterStreak} pointerEvents="none" />
+        {/* Main Nunito Sans ExtraBold Title */}
+        <View style={styles.titleRow}>
+          <Text style={styles.titleText}>{title}</Text>
+
+          {stamp && (
+            <PaperStamp
+              label={stamp}
+              color={Colors.stampRed}
+              rotation="2deg"
+            />
+          )}
+        </View>
+
+        {/* Technical Editorial Hairline Divider */}
+        <View style={styles.hairlineDivider} />
       </View>
-
-      {stamp && (
-        <PaperStamp
-          label={stamp}
-          color={Colors.stampRed}
-          rotation="3.5deg"
-        />
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    marginVertical: Spacing.md,
+    paddingHorizontal: 2,
+  },
+  contentColumn: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  topMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: Spacing.sm,
-    paddingHorizontal: 2,
   },
-  titleWrapper: {
-    position: 'relative',
+  monoCategoryText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.textMuted,
+    letterSpacing: 1.5,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  monoCodeText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: Colors.stampRed,
+    letterSpacing: 1,
+    fontWeight: '800',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 1,
   },
   titleText: {
     fontSize: 22,
-    fontWeight: '900',
+    fontFamily: Fonts.sansBlack,
     color: Colors.text,
-    fontFamily: Fonts.serif,
-    letterSpacing: -0.3,
-    zIndex: 2,
+    letterSpacing: -0.5,
   },
-  highlighterStreak: {
-    position: 'absolute',
-    bottom: 2,
-    left: -4,
-    right: -6,
-    height: 10,
-    backgroundColor: Colors.yellow,
-    borderRadius: 3,
-    opacity: 0.7,
-    transform: [{ rotate: '-1deg' }],
-    zIndex: 1,
+  hairlineDivider: {
+    height: 1,
+    backgroundColor: 'rgba(28, 26, 36, 0.12)',
+    marginTop: 6,
+    width: '100%',
   },
 });

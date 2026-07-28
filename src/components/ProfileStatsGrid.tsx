@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { ScrapbookCard } from '@/components/ScrapbookCard';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
@@ -17,13 +17,13 @@ interface ProfileStatsGridProps {
 export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ stats }) => {
   return (
     <View style={styles.container}>
-      <SectionTitle title="küçük istatistikler" stamp="ARCHIVE STATS" />
+      <SectionTitle title="küçük istatistikler" categoryLabel="ANALOG STATS" code="STAT-35MM" stamp="VERIFIED" />
 
       {/* 2-Column Organic Grid */}
       <View style={styles.gridRow}>
-        {/* 1. Film Rolls Label */}
+        {/* 1. Film Rolls Label (Paper Cream Card) */}
         <ScrapbookCard
-          bgColor={Colors.yellow}
+          bgColor={Colors.paper}
           rotation="-2deg"
           hasTape="top-left"
           tapeColor={Colors.tapeDefault}
@@ -31,33 +31,33 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ stats }) => 
           style={styles.statCell}
         >
           <View style={styles.cellHeader}>
-            <PozIcon name="films" size={16} color={Colors.yellowDark} />
-            <Text style={[styles.cellCode, { color: Colors.yellowDark }]}>FILMS</Text>
+            <PozIcon name="films" size={16} color={Colors.mustard} />
+            <Text style={[styles.cellCode, { color: Colors.mustard }]}>FILMS</Text>
           </View>
-          <Text style={styles.statValueText}>{stats.filmCount}</Text>
-          <Text style={styles.statLabelText}>FİLM KUTUSU</Text>
+          <Text style={[styles.statValueText, { color: Colors.ink }]}>{stats.filmCount}</Text>
+          <Text style={[styles.statLabelText, { color: Colors.textSecondary }]}>FİLM KUTUSU</Text>
         </ScrapbookCard>
 
-        {/* 2. Negative Frames Ticket */}
+        {/* 2. Negative Frames Ticket (Deep Navy Card) */}
         <ScrapbookCard
-          bgColor={Colors.blue}
+          bgColor={Colors.deepNavy}
           rotation="1.8deg"
           hasTape="top-right"
-          tapeColor={Colors.tapePink}
+          tapeColor={Colors.tapeBlue}
           padding={Spacing.sm}
           style={styles.statCell}
         >
           <View style={styles.cellHeader}>
-            <PozIcon name="photo" size={16} color={Colors.blueDark} />
-            <Text style={[styles.cellCode, { color: Colors.blueDark }]}>FRAMES</Text>
+            <PozIcon name="photo" size={16} color={Colors.filmBlue} />
+            <Text style={[styles.cellCode, { color: Colors.filmBlue }]}>FRAMES</Text>
           </View>
-          <Text style={styles.statValueText}>{stats.frameCount}</Text>
-          <Text style={styles.statLabelText}>ÇEKİLEN KARE</Text>
+          <Text style={[styles.statValueText, { color: '#F4ECE2' }]}>{stats.frameCount}</Text>
+          <Text style={[styles.statLabelText, { color: Colors.filmBlue }]}>ÇEKİLEN KARE</Text>
         </ScrapbookCard>
 
-        {/* 3. Cassette Songs Tag */}
+        {/* 3. Cassette Songs Tag (Burgundy Card) */}
         <ScrapbookCard
-          bgColor={Colors.pink}
+          bgColor={Colors.burgundy}
           rotation="1.5deg"
           hasTape="top-left"
           tapeColor={Colors.tapeDefault}
@@ -65,16 +65,16 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ stats }) => 
           style={styles.statCell}
         >
           <View style={styles.cellHeader}>
-            <PozIcon name="music" size={16} color={Colors.pinkDark} />
-            <Text style={[styles.cellCode, { color: Colors.pinkDark }]}>AUDIO</Text>
+            <PozIcon name="music" size={16} color="#F4ECE2" />
+            <Text style={[styles.cellCode, { color: '#F4ECE2' }]}>AUDIO</Text>
           </View>
-          <Text style={styles.statValueText}>{stats.songCount}</Text>
-          <Text style={styles.statLabelText}>EKLENEN ŞARKI</Text>
+          <Text style={[styles.statValueText, { color: '#F4ECE2' }]}>{stats.songCount}</Text>
+          <Text style={[styles.statLabelText, { color: 'rgba(244, 236, 226, 0.75)' }]}>EKLENEN ŞARKI</Text>
         </ScrapbookCard>
 
-        {/* 4. Date Stamp Memories */}
+        {/* 4. Date Stamp Memories (Olive Card) */}
         <ScrapbookCard
-          bgColor={Colors.green}
+          bgColor={Colors.olive}
           rotation="-1.5deg"
           hasTape="top-right"
           tapeColor={Colors.tapeLavender}
@@ -82,11 +82,11 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ stats }) => 
           style={styles.statCell}
         >
           <View style={styles.cellHeader}>
-            <PozIcon name="calendar" size={16} color={Colors.greenDark} />
-            <Text style={[styles.cellCode, { color: Colors.greenDark }]}>DAYS</Text>
+            <PozIcon name="calendar" size={16} color="#F4ECE2" />
+            <Text style={[styles.cellCode, { color: '#F4ECE2' }]}>DAYS</Text>
           </View>
-          <Text style={styles.statValueText}>{stats.memoryDayCount}</Text>
-          <Text style={styles.statLabelText}>ANI GÜNÜ</Text>
+          <Text style={[styles.statValueText, { color: '#F4ECE2' }]}>{stats.memoryDayCount}</Text>
+          <Text style={[styles.statLabelText, { color: 'rgba(244, 236, 226, 0.75)' }]}>ANI GÜNÜ</Text>
         </ScrapbookCard>
       </View>
     </View>
@@ -122,14 +122,13 @@ const styles = StyleSheet.create({
   statValueText: {
     fontSize: 28,
     fontFamily: Fonts.sansBlack,
-    color: Colors.text,
     letterSpacing: -0.5,
   },
   statLabelText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
     marginTop: 1,
     letterSpacing: 0.5,
+    fontWeight: '700',
   },
 });

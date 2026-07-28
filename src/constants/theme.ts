@@ -2,59 +2,81 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1C1A24',
-    background: '#FAF6EE',
-    backgroundElement: '#FFFDF9',
-    backgroundSelected: '#E3D7FF',
-    textSecondary: '#6A6577',
+    text: '#18131D',
+    background: '#F3EEE6',
+    backgroundElement: '#F7F2EA',
+    backgroundSelected: '#746080',
+    textSecondary: '#5E7487',
   },
   dark: {
-    text: '#FAF6EE',
-    background: '#16141D',
-    backgroundElement: '#211E2B',
-    backgroundSelected: '#322C40',
-    textSecondary: '#9E98A8',
+    text: '#F4ECE2',
+    background: '#111827',
+    backgroundElement: '#2A1730',
+    backgroundSelected: '#4C315F',
+    textSecondary: '#9B90A3',
   },
 
-  // Scrapbook Base Palette
-  background: '#FAF6EE', // Warm off-white / cream
-  backgroundCard: '#FFFDF9', // Pure paper white for cards
-  text: '#1C1A24', // Deep ink near-black
-  textSecondary: '#6A6577', // Muted ink gray
-  textMuted: '#9E98A8', // Subtle caption gray
-  border: 'rgba(28, 26, 36, 0.08)', // Soft paper border
-  shadow: 'rgba(28, 26, 36, 0.08)', // Natural drop shadow
+  // Global Editorial Analog Archive Color System
+  background: '#F3EEE6', // Warm bone / cream zemin
+  backgroundCard: '#F7F2EA', // Pure paper cream for cards/memo
+  paper: '#F7F2EA', // Pure paper cream for cards/memo
+  surfaceCream: '#E9E0D3',
+  ink: '#18131D', // Deep ink near-black
+  text: '#18131D',
+  textSecondary: '#5E7487', // Muted blue-grey
+  textMuted: '#9B90A3', // Dusty caption text
+  border: 'rgba(24, 19, 29, 0.1)',
+  shadow: 'rgba(24, 19, 29, 0.12)',
 
-  // Accent Colors (Pastel & Vibrant Scrapbook Shades)
-  lavender: '#E3D7FF', // Primary Hero Card
-  lavenderDark: '#8F66E3',
-  yellow: '#FFF1B0', // Günün Notu Card
-  yellowDark: '#E6A800',
-  blue: '#CBEBFC', // Günün Kareleri Card
-  blueDark: '#2B83BA',
-  pink: '#FFD7EC', // Günün Şarkısı Card
-  pinkDark: '#D9488F',
-  green: '#C6F6D5', // Bugünkü Hissin Card
-  greenDark: '#2F855A',
+  // Rich Editorial Tones
+  brown: '#3A261F',
+  deepBrown: '#241713',
+  burgundy: '#5A1F2D',
+  darkRed: '#8D2E37',
+  navy: '#182235',
+  deepNavy: '#111827',
+  plum: '#2A1730',
+  purple: '#4C315F',
+  dustyPurple: '#746080',
+  filmBlue: '#8FA8B8',
+  mutedBlue: '#5E7487',
+  olive: '#6B7052',
+  mutedGreen: '#8A9272',
+  mustard: '#A98543',
+  offWhite: '#EEE7DD',
+  lightText: '#F4ECE2',
+  dangerLab: '#C94A4A',
+
+  // Mapped Muted Editorial Shades (Backwards-compatible tokens)
+  lavender: '#2A1730', // Deep plum for cards
+  lavenderDark: '#746080',
+  yellow: '#F7F2EA', // Cream paper for memo
+  yellowDark: '#A98543',
+  blue: '#111827', // Deep navy for hero
+  blueDark: '#8FA8B8',
+  pink: '#5A1F2D', // Burgundy for song card
+  pinkDark: '#8D2E37',
+  green: '#6B7052', // Olive green for mood
+  greenDark: '#8A9272',
   
-  // Stamp & Ink accents
-  stampRed: '#E54848',
-  filmBlack: '#16141D',
+  // Stamp & Ink Accents
+  stampRed: '#C94A4A',
+  filmBlack: '#111827',
   
   // Washi Tapes
-  tapeDefault: 'rgba(255, 248, 210, 0.82)',
-  tapeLavender: 'rgba(227, 215, 255, 0.78)',
-  tapePink: 'rgba(255, 215, 236, 0.78)',
-  tapeBlue: 'rgba(203, 235, 252, 0.78)',
+  tapeDefault: 'rgba(233, 224, 211, 0.85)',
+  tapeLavender: 'rgba(116, 96, 128, 0.75)',
+  tapePink: 'rgba(90, 31, 45, 0.75)',
+  tapeBlue: 'rgba(143, 168, 184, 0.75)',
   
   // Tab Bar Theme
-  tabBarBg: '#181520', // Dark mürdüm / charcoal floating capsule
-  tabBarBorder: 'rgba(255, 255, 255, 0.12)',
-  tabBarActiveBg: '#FAF6EE', // Selected tab capsule
-  tabBarActiveIcon: '#181520',
-  tabBarInactiveIcon: '#928DA0',
-  tabCameraBg: '#E3D7FF', // Center camera button fill
-  tabCameraIcon: '#181520',
+  tabBarBg: '#111827', // Deep navy floating capsule
+  tabBarBorder: 'rgba(255, 255, 255, 0.15)',
+  tabBarActiveBg: '#F7F2EA', // Selected paper tab
+  tabBarActiveIcon: '#111827',
+  tabBarInactiveIcon: '#9B90A3',
+  tabCameraBg: '#8FA8B8', // Center camera button fill
+  tabCameraIcon: '#111827',
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
@@ -90,8 +112,8 @@ export const Spacing = {
 export const BorderRadius = {
   sm: 8,
   md: 14,
-  lg: 22,
-  xl: 30,
+  lg: 18, // Refined medium-large radius
+  xl: 24,
   full: 9999,
 } as const;
 

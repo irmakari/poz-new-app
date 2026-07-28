@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
   ViewStyle,
   TouchableOpacity,
   StyleProp,
+  Animated,
+  AccessibilityInfo,
 } from 'react-native';
 import { Colors, BorderRadius, Spacing } from '@/constants/theme';
 import { TapeDecoration, TapePosition } from './TapeDecoration';
@@ -40,6 +42,35 @@ export const ScrapbookCard: React.FC<ScrapbookCardProps> = ({
   hasTornEdge = false,
   hasTexture = true,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      setReduceMotion(enabled);
+    });
+  }, []);
+
+  const handlePressIn = () => {
+    if (reduceMotion) return;
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      tension: 200,
+      friction: 12,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    if (reduceMotion) return;
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 180,
+      friction: 10,
+    }).start();
+  };
+
   const tapePosition: TapePosition =
     typeof hasTape === 'string' ? hasTape : 'top-left';
 
@@ -54,7 +85,7 @@ export const ScrapbookCard: React.FC<ScrapbookCardProps> = ({
   };
 
   const CardContent = (
-    <View style={[styles.card, containerStyle, style]}>
+    <Animated.View style={[styles.card, containerStyle, style, { transform: [{ rotate: rotation }, { scale: scaleAnim }] }]}>
       {/* Paper Grain Overlay */}
       {hasTexture && <PaperTextureOverlay />}
 
@@ -80,7 +111,7 @@ export const ScrapbookCard: React.FC<ScrapbookCardProps> = ({
       <View style={styles.paperHighlight} pointerEvents="none" />
 
       {children}
-    </View>
+    </Animated.View>
   );
 
   if (onPress) {
@@ -88,6 +119,8 @@ export const ScrapbookCard: React.FC<ScrapbookCardProps> = ({
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={styles.touchable}
       >
         {CardContent}
@@ -103,15 +136,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
     position: 'relative',
-    overflow: 'visible',
+    overflow: 'hidden',
+
+    // Mechanical Editorial Object Shadow
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   paperHighlight: {
     position: 'absolute',
@@ -119,8 +154,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    borderTopLeftRadius: BorderRadius.lg,
-    borderTopRightRadius: BorderRadius.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
 });

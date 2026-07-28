@@ -99,10 +99,10 @@ export default function HomeScreen() {
 
         {/* Hero Card: Analog Film Envelope / Photo Sleeve */}
         <ScrapbookCard
-          bgColor={Colors.blue}
+          bgColor={Colors.deepNavy}
           rotation="-1.2deg"
           hasTape="top-right"
-          tapeColor={Colors.tapeDefault}
+          tapeColor={Colors.tapeBlue}
           hasTornEdge="bottom"
           padding={Spacing.lg}
           style={styles.heroEnvelope}
@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroTitleGroup}>
-              <PaperStamp label={isoTag || '35MM ISO 400'} color={Colors.blueDark} rotation="-3deg" />
+              <PaperStamp label={isoTag || '35MM ISO 400'} color={Colors.stampRed} rotation="-3deg" />
               <Text style={styles.heroSubHeader}>bugünün filmi</Text>
             </View>
 
@@ -141,7 +141,7 @@ export default function HomeScreen() {
         <WeekSelector />
 
         {/* 2x2 Masonry Scrapbook Collage Grid */}
-        <SectionTitle title="bugünün anıları" stamp="DAILY LOG" />
+        <SectionTitle title="bugünün anıları" categoryLabel="EDITORIAL LOG" code="LOG-0728" stamp="DAILY" />
 
         {/* Organic Scrapbook Collage (Staggered Layout) */}
         <View style={styles.collageContainer}>
@@ -149,10 +149,10 @@ export default function HomeScreen() {
           <View style={styles.collageColumnLeft}>
             {/* 1. Yellow Memo Sheet Card (Torn Bottom Edge) */}
             <ScrapbookCard
-              bgColor={Colors.yellow}
+              bgColor={Colors.paper}
               rotation="-2.4deg"
               hasTape="top-left"
-              tapeColor={Colors.tapePink}
+              tapeColor={Colors.tapeDefault}
               hasTornEdge="bottom"
               padding={Spacing.md}
               onPress={() => {
@@ -163,7 +163,7 @@ export default function HomeScreen() {
             >
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.cardHeaderTitle}>günün notu</Text>
-                <PaperStamp label="MEMO" color={Colors.yellowDark} rotation="4deg" />
+                <PaperStamp label="MEMO" color={Colors.burgundy} rotation="4deg" />
               </View>
 
               <Text style={styles.handwrittenNoteText}>
@@ -179,7 +179,7 @@ export default function HomeScreen() {
 
             {/* 4. Green Mood Sticker Card */}
             <ScrapbookCard
-              bgColor={Colors.green}
+              bgColor={Colors.olive}
               rotation="3deg"
               hasTape="top-right"
               tapeColor={Colors.tapeDefault}
@@ -187,10 +187,10 @@ export default function HomeScreen() {
               style={styles.greenStickerCard}
             >
               <View style={styles.moodHeaderRow}>
-                <PozIcon name="sparkle" size={20} color={Colors.greenDark} />
-                <Text style={styles.moodTagText}>bugünkü hissin</Text>
+                <PozIcon name="sparkle" size={20} color="#FFFDF6" />
+                <Text style={[styles.moodTagText, { color: Colors.lightText }]}>bugünkü hissin</Text>
               </View>
-              <Text style={styles.moodValueText}>
+              <Text style={[styles.moodValueText, { color: Colors.lightText }]}>
                 {hasMood ? todayNoteObj!.mood : 'henüz taze'}
               </Text>
 
@@ -204,16 +204,16 @@ export default function HomeScreen() {
           <View style={styles.collageColumnRight}>
             {/* 2. Mat Lavender Cardstock with Stacked Photo Prints */}
             <ScrapbookCard
-              bgColor={Colors.lavender}
+              bgColor={Colors.plum}
               rotation="1.6deg"
               hasTape="top-right"
-              tapeColor={Colors.tapeBlue}
+              tapeColor={Colors.tapeLavender}
               padding={Spacing.md}
               style={styles.bluePhotosCard}
             >
               <View style={styles.cardHeaderRow}>
-                <Text style={styles.cardHeaderTitle}>bugünün kareleri</Text>
-                <Text style={styles.photoCountBadge}>
+                <Text style={[styles.cardHeaderTitle, { color: Colors.lightText }]}>bugünün kareleri</Text>
+                <Text style={[styles.photoCountBadge, { color: Colors.filmBlue }]}>
                   {dailyCount > 0 || filmCount > 0 ? `${dailyCount} BASKI • ${filmCount} FİLM` : '0 KARE'}
                 </Text>
               </View>
@@ -234,7 +234,7 @@ export default function HomeScreen() {
                     <View style={styles.photoPrintFront}>
                       <TapeDecoration position="top-right" width={32} height={10} color={Colors.tapeDefault} />
                       <View style={styles.negativeDarkFillFront}>
-                        <PozIcon name={dailyCount > 0 ? 'photo' : 'camera'} size={24} color={Colors.lavender} />
+                        <PozIcon name={dailyCount > 0 ? 'photo' : 'camera'} size={24} color={Colors.plum} />
                       </View>
                       <Text style={styles.printCodeText}>
                         {dailyCount > 0 ? `${dailyCount} GÜNLÜK FOTOĞRAF` : `${filmCount} FİLM KARESI`}
@@ -243,8 +243,8 @@ export default function HomeScreen() {
                   </>
                 ) : (
                   <View style={{ alignItems: 'center', justifyContent: 'center', height: 110, gap: 4 }}>
-                    <PozIcon name="camera" size={32} color={Colors.lavenderDark} />
-                    <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.lavenderDark, textAlign: 'center' }}>
+                    <PozIcon name="camera" size={32} color={Colors.filmBlue} />
+                    <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.filmBlue, textAlign: 'center' }}>
                       henüz kare çekilmedi
                     </Text>
                   </View>
@@ -254,7 +254,7 @@ export default function HomeScreen() {
 
             {/* 3. Pink Cassette Tape / Concert Ticket Card */}
             <ScrapbookCard
-              bgColor={Colors.pink}
+              bgColor={Colors.burgundy}
               rotation="-1.8deg"
               hasTape="bottom-left"
               tapeColor={Colors.tapeDefault}
@@ -262,8 +262,8 @@ export default function HomeScreen() {
               style={styles.pinkSongCard}
             >
               <View style={styles.cardHeaderRow}>
-                <PozIcon name="music" size={18} color={Colors.pinkDark} />
-                <Text style={styles.songLabel}>günün şarkısı</Text>
+                <PozIcon name="music" size={18} color="#FFFDF6" />
+                <Text style={[styles.songLabel, { color: Colors.lightText }]}>günün şarkısı</Text>
               </View>
 
               {/* Physical Cassette Label / Album Badge */}
@@ -272,10 +272,10 @@ export default function HomeScreen() {
                   <PozIcon name="music" size={20} color="#FFFDF6" />
                 </View>
                 <View style={styles.songInfoGroup}>
-                  <Text style={styles.songTitleText} numberOfLines={1}>
+                  <Text style={[styles.songTitleText, { color: Colors.lightText }]} numberOfLines={1}>
                     {hasSong ? todayNoteObj!.song!.title : 'şarkı seçilmedi'}
                   </Text>
-                  <Text style={styles.artistNameText} numberOfLines={1}>
+                  <Text style={[styles.artistNameText, { color: Colors.filmBlue }]} numberOfLines={1}>
                     {hasSong ? todayNoteObj!.song!.artist : 'dokunarak ekle 🎵'}
                   </Text>
                 </View>
@@ -446,10 +446,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   heroSubHeader: {
-    fontSize: 12,
-    color: Colors.textSecondary,
+    fontSize: 11,
+    color: Colors.filmBlue,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     fontFamily: Fonts.mono,
     marginTop: 4,
   },
@@ -484,14 +484,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: Colors.yellow,
+    backgroundColor: Colors.mustard,
   },
   filmTitle: {
     fontSize: 28,
-    color: Colors.text,
-    fontFamily: Fonts.serif,
+    color: '#FFFDF9',
+    fontFamily: Fonts.sansBlack,
     marginVertical: 4,
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   heroFooterRow: {
     flexDirection: 'row',
@@ -501,19 +501,20 @@ const styles = StyleSheet.create({
   },
   frameCounterText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.7)',
     fontFamily: Fonts.mono,
   },
   remainingBadge: {
     fontSize: 10,
-    color: Colors.blueDark,
+    color: '#FFFDF9',
     fontFamily: Fonts.mono,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: Colors.burgundy,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: 'rgba(43, 131, 186, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    fontWeight: '800',
   },
 
   /* Collage Staggered Grid */

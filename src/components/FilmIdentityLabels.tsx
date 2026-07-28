@@ -17,52 +17,52 @@ interface FilmIdentityLabelsProps {
 export const FilmIdentityLabels: React.FC<FilmIdentityLabelsProps> = ({ identity }) => {
   return (
     <View style={styles.container}>
-      <SectionTitle title="senin film kimliğin" stamp="IDENTITY LOG" />
+      <SectionTitle title="senin film kimliğin" categoryLabel="PROFILE LABELS" code="LAB-35MM" stamp="IDENTITY" />
 
       {/* Color Test Strips & Lab Tags Grid */}
       <View style={styles.tagsContainer}>
-        {/* 1. Green Mood Tag */}
-        <View style={[styles.identityTag, { backgroundColor: Colors.green, transform: [{ rotate: '-1.8deg' }] }]}>
-          <PozIcon name="sparkle" size={14} color={Colors.greenDark} />
+        {/* 1. Olive Mood Tag */}
+        <View style={[styles.identityTag, { backgroundColor: Colors.olive, transform: [{ rotate: '-1.8deg' }] }]}>
+          <PozIcon name="sparkle" size={14} color="#F4ECE2" />
           <View>
-            <Text style={[styles.tagLabel, { color: Colors.greenDark }]}>BASKIN HİS</Text>
-            <Text style={styles.tagValueText}>{identity.topMood}</Text>
+            <Text style={[styles.tagLabel, { color: 'rgba(244, 236, 226, 0.75)' }]}>BASKIN HİS</Text>
+            <Text style={[styles.tagValueText, { color: '#F4ECE2' }]}>{identity.topMood}</Text>
           </View>
         </View>
 
-        {/* 2. Lavender Film Tag */}
-        <View style={[styles.identityTag, { backgroundColor: Colors.lavender, transform: [{ rotate: '2deg' }] }]}>
-          <PozIcon name="films" size={14} color={Colors.lavenderDark} />
+        {/* 2. Plum Film Tag */}
+        <View style={[styles.identityTag, { backgroundColor: Colors.plum, transform: [{ rotate: '2deg' }] }]}>
+          <PozIcon name="films" size={14} color="#F4ECE2" />
           <View>
-            <Text style={[styles.tagLabel, { color: Colors.lavenderDark }]}>FAVORİ FİLM</Text>
-            <Text style={styles.tagValueText}>{identity.favoriteFilm}</Text>
+            <Text style={[styles.tagLabel, { color: Colors.filmBlue }]}>FAVORİ FİLM</Text>
+            <Text style={[styles.tagValueText, { color: '#F4ECE2' }]}>{identity.favoriteFilm}</Text>
           </View>
         </View>
 
-        {/* 3. Yellow Time Ticket */}
-        <View style={[styles.identityTag, { backgroundColor: Colors.yellow, transform: [{ rotate: '-1.2deg' }] }]}>
-          <PozIcon name="calendar" size={14} color={Colors.yellowDark} />
+        {/* 3. Paper Cream Time Ticket */}
+        <View style={[styles.identityTag, { backgroundColor: Colors.paper, transform: [{ rotate: '-1.2deg' }] }]}>
+          <PozIcon name="calendar" size={14} color={Colors.mustard} />
           <View>
-            <Text style={[styles.tagLabel, { color: Colors.yellowDark }]}>ÇEKİM SAATİ</Text>
-            <Text style={styles.tagValueText}>{identity.favoriteTime}</Text>
+            <Text style={[styles.tagLabel, { color: Colors.mustard }]}>ÇEKİM SAATİ</Text>
+            <Text style={[styles.tagValueText, { color: Colors.ink }]}>{identity.favoriteTime}</Text>
           </View>
         </View>
 
-        {/* 4. Pink Cassette Tag */}
-        <View style={[styles.identityTag, { backgroundColor: Colors.pink, transform: [{ rotate: '1.5deg' }] }]}>
-          <PozIcon name="music" size={14} color={Colors.pinkDark} />
+        {/* 4. Burgundy Cassette Tag */}
+        <View style={[styles.identityTag, { backgroundColor: Colors.burgundy, transform: [{ rotate: '1.5deg' }] }]}>
+          <PozIcon name="music" size={14} color="#F4ECE2" />
           <View>
-            <Text style={[styles.tagLabel, { color: Colors.pinkDark }]}>TÜR</Text>
-            <Text style={styles.tagValueText}>{identity.topGenre}</Text>
+            <Text style={[styles.tagLabel, { color: 'rgba(244, 236, 226, 0.75)' }]}>TÜR</Text>
+            <Text style={[styles.tagValueText, { color: '#F4ECE2' }]}>{identity.topGenre}</Text>
           </View>
         </View>
 
-        {/* 5. Blue Location Tag */}
-        <View style={[styles.identityTag, { backgroundColor: Colors.blue, transform: [{ rotate: '-1deg' }] }]}>
-          <PozIcon name="photo" size={14} color={Colors.blueDark} />
+        {/* 5. Deep Navy Location Tag */}
+        <View style={[styles.identityTag, { backgroundColor: Colors.deepNavy, transform: [{ rotate: '-1deg' }] }]}>
+          <PozIcon name="photo" size={14} color={Colors.filmBlue} />
           <View>
-            <Text style={[styles.tagLabel, { color: Colors.blueDark }]}>FAVORİ MEKAN</Text>
-            <Text style={styles.tagValueText}>{identity.topLocation}</Text>
+            <Text style={[styles.tagLabel, { color: Colors.filmBlue }]}>FAVORİ MEKAN</Text>
+            <Text style={[styles.tagValueText, { color: '#F4ECE2' }]}>{identity.topLocation}</Text>
           </View>
         </View>
       </View>
@@ -96,15 +96,15 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     gap: 8,
     borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.08)',
+    borderColor: 'rgba(28, 26, 36, 0.1)',
     shadowColor: Colors.text,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
   },
   tagLabel: {
-    fontSize: 8,
+    fontSize: 8.5,
     fontFamily: Fonts.mono,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -112,10 +112,9 @@ const styles = StyleSheet.create({
   tagValueText: {
     fontSize: 13,
     fontFamily: Fonts.sansBold,
-    color: Colors.text,
   },
   summaryCard: {
-    backgroundColor: '#FFFDF9',
+    backgroundColor: '#F7F2EA',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginTop: 4,
@@ -124,9 +123,9 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: 13,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sansMedium,
     fontStyle: 'italic',
-    color: Colors.text,
+    color: Colors.ink,
     lineHeight: 18,
   },
 });

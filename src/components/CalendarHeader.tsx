@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
   monthTitleText: {
     fontSize: 28,
     color: Colors.text,
-    fontFamily: Fonts.serif,
-    letterSpacing: -0.5,
+    fontFamily: Fonts.sansBlack,
+    letterSpacing: -0.8,
   },
   arrowButtonsGroup: {
     flexDirection: 'row',

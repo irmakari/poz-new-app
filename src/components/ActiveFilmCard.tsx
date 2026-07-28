@@ -28,10 +28,10 @@ export const ActiveFilmCard: React.FC<ActiveFilmCardProps> = ({ film }) => {
 
   return (
     <ScrapbookCard
-      bgColor={film.color}
+      bgColor={Colors.deepNavy}
       rotation="-1.2deg"
       hasTape="top-right"
-      tapeColor={Colors.tapeDefault}
+      tapeColor={Colors.tapeBlue}
       tapeRotation="12deg"
       padding={Spacing.lg}
       onPress={handleCardPress}
@@ -43,7 +43,7 @@ export const ActiveFilmCard: React.FC<ActiveFilmCardProps> = ({ film }) => {
       {/* Header Row */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <PaperStamp label={film.stampText} color={film.darkColor || Colors.lavenderDark} rotation="-3deg" />
+          <PaperStamp label={film.stampText || '35MM ISO 400'} color={Colors.stampRed} rotation="-3deg" />
           <Text style={styles.statusText}>çekime devam ediyor</Text>
         </View>
 
@@ -82,7 +82,7 @@ export const ActiveFilmCard: React.FC<ActiveFilmCardProps> = ({ film }) => {
         style={styles.continueButton}
       >
         <Text style={styles.continueButtonText}>filme devam et</Text>
-        <PozIcon name="camera" size={18} color="#FFFDF6" />
+        <PozIcon name="camera" size={18} color="#F4ECE2" />
       </TouchableOpacity>
     </ScrapbookCard>
   );
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     left: 36,
     right: 36,
     height: 1,
-    backgroundColor: 'rgba(143, 102, 227, 0.3)',
+    backgroundColor: 'rgba(143, 168, 184, 0.25)',
   },
   headerRow: {
     flexDirection: 'row',
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontFamily: Fonts.mono,
-    color: Colors.lavenderDark,
+    color: '#8FA8B8',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginTop: 4,
@@ -148,22 +148,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: Colors.yellow,
+    backgroundColor: Colors.mustard,
   },
   titleArea: {
     marginVertical: 4,
   },
   filmTitleText: {
-    fontSize: 30,
-    fontFamily: Fonts.serif,
-    fontWeight: '900',
-    color: Colors.text,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    fontFamily: Fonts.sansBlack,
+    color: '#F4ECE2',
+    letterSpacing: -0.8,
   },
   metaBadge: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
+    color: '#8FA8B8',
     marginTop: 2,
   },
   footerRow: {
@@ -176,12 +175,12 @@ const styles = StyleSheet.create({
   frameCounterText: {
     fontSize: 12,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
+    color: 'rgba(244, 236, 226, 0.75)',
   },
   serialTagText: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontFamily: Fonts.mono,
-    color: Colors.lavenderDark,
+    color: Colors.mustard,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -189,20 +188,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#181520',
+    backgroundColor: Colors.burgundy,
     height: 52,
     borderRadius: BorderRadius.md,
     gap: 8,
     marginTop: 4,
-    shadowColor: Colors.text,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   continueButtonText: {
     fontSize: 15,
     fontFamily: Fonts.sansBold,
-    color: '#FFFDF6',
+    color: '#F4ECE2',
+    letterSpacing: 0.3,
   },
 });

@@ -72,10 +72,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mainTitleText: {
-    fontSize: 30,
+    fontSize: 28,
     color: Colors.text,
-    fontFamily: Fonts.serif,
-    letterSpacing: -0.5,
+    fontFamily: Fonts.sansBlack,
+    letterSpacing: -0.8,
   },
   settingsIconButton: {
     width: 40,
