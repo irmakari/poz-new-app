@@ -77,6 +77,7 @@ export const FILM_PURPOSES: FilmPurposeOption[] = [
 ];
 
 export const FRAME_OPTIONS: FrameOption[] = [
+  { count: 3, label: '3 EXP', subLabel: 'QUICK TEST • 3 karelik deneme filmi' },
   { count: 30, label: '30 EXP', subLabel: 'STANDARD ROLL • önerilen' },
   { count: 36, label: '36 EXP', subLabel: 'FULL ROLL • uzun süreli' },
   { count: 24, label: '24 EXP', subLabel: 'SHORT ROLL • gezi/hafta sonu' },

@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { NewFilmHeader } from '@/components/NewFilmHeader';
-import { PaperStamp } from '@/components/PaperStamp';
-import { FilmTypeSelector } from '@/components/FilmTypeSelector';
+import { ActiveFilmNotice } from '@/components/ActiveFilmNotice';
+import { CreateFilmButton } from '@/components/CreateFilmButton';
+import { DatePickerModal } from '@/components/DatePickerModal';
+import { FilmBoxPreview } from '@/components/FilmBoxPreview';
 import { FilmNameLabel } from '@/components/FilmNameLabel';
 import { FilmPurposeSelector } from '@/components/FilmPurposeSelector';
-import { FrameCountSelector } from '@/components/FrameCountSelector';
-import { StartModeSelector, StartMode } from '@/components/StartModeSelector';
-import { DatePickerModal } from '@/components/DatePickerModal';
-import { ActiveFilmNotice } from '@/components/ActiveFilmNotice';
-import { FilmBoxPreview } from '@/components/FilmBoxPreview';
 import { FilmSummaryReceipt } from '@/components/FilmSummaryReceipt';
-import { CreateFilmButton } from '@/components/CreateFilmButton';
+import { FilmTypeSelector } from '@/components/FilmTypeSelector';
+import { FrameCountSelector } from '@/components/FrameCountSelector';
+import { NewFilmHeader } from '@/components/NewFilmHeader';
+import { PaperStamp } from '@/components/PaperStamp';
+import { StartMode, StartModeSelector } from '@/components/StartModeSelector';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
 import {
-  FILM_TYPE_OPTIONS,
   FILM_PURPOSES,
+  FILM_TYPE_OPTIONS,
   FRAME_OPTIONS,
-  FilmTypeOption,
   FilmPurposeOption,
+  FilmTypeOption,
   FrameOption,
 } from '@/utils/newFilmData';
+import React, { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NewFilmScreen() {
   // Selection States
@@ -56,8 +56,8 @@ export default function NewFilmScreen() {
     selectedStartMode === 'now'
       ? '27 temmuz 2026'
       : selectedStartMode === 'tomorrow'
-      ? '28 temmuz 2026'
-      : selectedCustomDate;
+        ? '28 temmuz 2026'
+        : selectedCustomDate;
 
   return (
     <SafeAreaView style={styles.safeArea}>

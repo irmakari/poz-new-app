@@ -17,7 +17,7 @@ export const PhotoBack: React.FC<PhotoBackProps> = ({
   cardWidth,
   onOpenFullNote,
 }) => {
-  const cardHeight = Math.round(cardWidth * 1.25);
+  const cardHeight = Math.round(cardWidth * 1.5);
 
   return (
     <View style={[styles.polaroidBack, { width: cardWidth, height: cardHeight }]}>

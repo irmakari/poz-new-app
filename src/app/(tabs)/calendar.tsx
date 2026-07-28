@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '@/constants/theme';
-import { CalendarHeader } from '@/components/CalendarHeader';
-import { WeekdayHeader } from '@/components/WeekdayHeader';
 import { CalendarDayCellComponent } from '@/components/CalendarDayCellComponent';
+import { CalendarHeader } from '@/components/CalendarHeader';
 import { MonthlyFilmStrip } from '@/components/MonthlyFilmStrip';
-import { SelectedDayCard } from '@/components/SelectedDayCard';
 import { SectionTitle } from '@/components/SectionTitle';
-import { generateCalendarGrid, MOCK_MEMORIES, DayMemory } from '@/utils/calendarUtils';
-import { getTodayKey } from '@/utils/dateUtils';
+import { SelectedDayCard } from '@/components/SelectedDayCard';
+import { WeekdayHeader } from '@/components/WeekdayHeader';
+import { Colors, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { DayMemory, generateCalendarGrid, MOCK_MEMORIES } from '@/utils/calendarUtils';
+import { getTodayKey } from '@/utils/dateUtils';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CalendarScreen() {
   const { dailyNotes, photos } = useApp();

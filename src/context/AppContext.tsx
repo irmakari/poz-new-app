@@ -1,45 +1,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initialFilmList, FilmItem } from '@/utils/filmData';
+import { initialFilmList, FilmItem, FilmPhoto, generateAutoFilmName } from '@/utils/filmData';
 import { initialPhotoEntries, PhotoEntry, CaptureMode } from '@/utils/photoDetailData';
+import { getTodayKey, getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
 export interface DailyNoteItem {
-  dateKey: string; // e.g. '2026-07-27'
+  dateKey: string;
   note: string;
   timestamp: string;
   mood?: string;
   location?: string;
-  song?: {
-    title: string;
-    artist: string;
-  };
+  song?: { title: string; artist: string };
 }
 
 interface AppContextType {
   films: FilmItem[];
   activeFilm: FilmItem | null;
+  selectedActiveFilmId: string | null;
   photos: PhotoEntry[];
   dailyNotes: Record<string, DailyNoteItem>;
   isLoading: boolean;
   currentCaptureMode: CaptureMode;
 
-  // Actions
+  // Capture mode
   selectCaptureMode: (mode: CaptureMode) => void;
+
+  // Photo actions
   addDailyPhoto: (data: {
     photoUri?: string;
     note?: string;
     song?: { title: string; artist: string; albumCover?: string } | null;
     mood?: string | null;
     location?: string | null;
-  }) => Promise<void>;
-  addFilmPhoto: (data: {
-    photoUri?: string;
-    note?: string;
-    song?: { title: string; artist: string; albumCover?: string } | null;
-    mood?: string | null;
-    location?: string | null;
-    filmId?: string;
   }) => Promise<void>;
   addPhotoFrame: (data: {
     photoUri?: string;
@@ -49,81 +42,83 @@ interface AppContextType {
     location?: string | null;
     filter?: string;
     mode?: CaptureMode;
-  }) => Promise<void>;
+  }) => Promise<{ isFilmComplete: boolean; filmId?: string }>;
   updatePhotoFrame: (id: string, updates: Partial<PhotoEntry>) => Promise<void>;
   deletePhotoFrame: (id: string) => Promise<void>;
+
+  // Film lifecycle
   createNewFilm: (filmData: {
-    title: string;
-    iso: string;
+    name: string;
+    filmTypeName: string;
+    filmTypeId?: string;
     totalFrames: number;
-    description?: string;
     coverColor?: string;
-  }) => Promise<void>;
-  developFilm: (filmId: string) => Promise<void>;
+    iso?: number;
+  }) => Promise<string>; // returns new filmId
+  selectActiveFilm: (filmId: string) => Promise<void>;
+  setActiveFilm: (filmId: string) => Promise<void>; // alias
+  sendFilmToDevelop: (filmId: string) => Promise<void>;
+  finishFilmEarly: (filmId: string) => Promise<void>;
+  developFilm: (filmId: string) => Promise<void>; // complete development (wash done)
+  archiveFilm: (filmId: string) => Promise<void>;
   deleteFilm: (filmId: string) => Promise<void>;
-  setActiveFilm: (filmId: string) => Promise<void>;
+
+  // Daily notes
   saveDailyNote: (dateKey: string, noteData: Partial<DailyNoteItem>) => Promise<void>;
   deleteDailyNote: (dateKey: string) => Promise<void>;
 }
 
+// ─── Context & Storage ─────────────────────────────────────────────────────────
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  FILMS: '@poz_films_v2',
+  FILMS: '@poz_films_v3',
   PHOTOS: '@poz_photos_v2',
   DAILY_NOTES: '@poz_daily_notes_v2',
-  ACTIVE_FILM_ID: '@poz_active_film_id_v2',
+  SELECTED_FILM_ID: '@poz_selected_film_id_v3',
   CAPTURE_MODE: '@poz_capture_mode_v1',
 };
-
-import { getTodayKey, getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
 
 const DEFAULT_TODAY_KEY = getTodayKey();
 
 const DEFAULT_INITIAL_NOTES: Record<string, DailyNoteItem> = {
   '2026-07-27': {
     dateKey: '2026-07-27',
-    note: '“bugün biraz yorucuydu ama akşam güzel hissettirdi.”',
+    note: '"bugün biraz yorucuydu ama akşam güzel hissettirdi."',
     timestamp: '22:45 • ev',
     mood: 'huzurlu',
     location: 'ev',
-    song: {
-      title: 'a canım',
-      artist: 'mabel matiz',
-    },
+    song: { title: 'a canım', artist: 'mabel matiz' },
   },
 };
 
+// ─── Provider ──────────────────────────────────────────────────────────────────
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [films, setFilms] = useState<FilmItem[]>([]);
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [dailyNotes, setDailyNotes] = useState<Record<string, DailyNoteItem>>(DEFAULT_INITIAL_NOTES);
-  const [activeFilmId, setActiveFilmIdState] = useState<string>('summer-glow-july-2026');
+  const [selectedFilmId, setSelectedFilmId] = useState<string | null>(null);
   const [currentCaptureMode, setCurrentCaptureMode] = useState<CaptureMode>('daily');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load from AsyncStorage on app launch
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [savedFilms, savedPhotos, savedNotes, savedActiveId, savedMode] = await Promise.all([
+      const [savedFilms, savedPhotos, savedNotes, savedFilmId, savedMode] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.FILMS),
         AsyncStorage.getItem(STORAGE_KEYS.PHOTOS),
         AsyncStorage.getItem(STORAGE_KEYS.DAILY_NOTES),
-        AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_FILM_ID),
+        AsyncStorage.getItem(STORAGE_KEYS.SELECTED_FILM_ID),
         AsyncStorage.getItem(STORAGE_KEYS.CAPTURE_MODE),
       ]);
 
-      if (savedFilms) {
-        setFilms(JSON.parse(savedFilms));
-      } else {
-        setFilms(initialFilmList);
+      const parsedFilms: FilmItem[] = savedFilms ? JSON.parse(savedFilms) : initialFilmList;
+      if (!savedFilms) {
         await AsyncStorage.setItem(STORAGE_KEYS.FILMS, JSON.stringify(initialFilmList));
       }
+      setFilms(parsedFilms);
 
       if (savedPhotos) {
         setPhotos(JSON.parse(savedPhotos));
@@ -132,19 +127,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(initialPhotoEntries));
       }
 
-      if (savedNotes) {
-        setDailyNotes(JSON.parse(savedNotes));
+      if (savedNotes) setDailyNotes(JSON.parse(savedNotes));
+
+      if (savedFilmId) {
+        setSelectedFilmId(savedFilmId);
       } else {
-        setDailyNotes(DEFAULT_INITIAL_NOTES);
+        // Default: first active film
+        const firstActive = parsedFilms.find((f) => f.status === 'active');
+        if (firstActive) setSelectedFilmId(firstActive.id);
       }
 
-      if (savedActiveId) {
-        setActiveFilmIdState(savedActiveId);
-      }
-
-      if (savedMode) {
-        setCurrentCaptureMode(savedMode as CaptureMode);
-      }
+      if (savedMode) setCurrentCaptureMode(savedMode as CaptureMode);
     } catch (e) {
       console.error('Error loading AppContext data', e);
     } finally {
@@ -152,34 +145,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const activeFilm =
+    films.find((f) => f.id === selectedFilmId && f.status === 'active') ||
+    films.find((f) => f.status === 'active') ||
+    null;
+
+  const selectedActiveFilmId = selectedFilmId;
+
+  // ── Storage helpers ────────────────────────────────────────────────────────
+  const saveFilmsToStorage = async (updated: FilmItem[]) => {
+    setFilms(updated);
+    await AsyncStorage.setItem(STORAGE_KEYS.FILMS, JSON.stringify(updated));
+  };
+  const savePhotosToStorage = async (updated: PhotoEntry[]) => {
+    setPhotos(updated);
+    await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(updated));
+  };
+  const saveNotesToStorage = async (updated: Record<string, DailyNoteItem>) => {
+    setDailyNotes(updated);
+    await AsyncStorage.setItem(STORAGE_KEYS.DAILY_NOTES, JSON.stringify(updated));
+  };
+
+  // ── Capture mode ───────────────────────────────────────────────────────────
   const selectCaptureMode = async (mode: CaptureMode) => {
     setCurrentCaptureMode(mode);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.CAPTURE_MODE, mode);
-    } catch (e) {
-      console.error('Error saving capture mode', e);
-    }
+    try { await AsyncStorage.setItem(STORAGE_KEYS.CAPTURE_MODE, mode); } catch {}
   };
 
-  const activeFilm = films.find((f) => f.id === activeFilmId) || films.find((f) => f.status === 'active') || films[0] || null;
-
-  // Sync helpers
-  const saveFilmsToStorage = async (updatedFilms: FilmItem[]) => {
-    setFilms(updatedFilms);
-    await AsyncStorage.setItem(STORAGE_KEYS.FILMS, JSON.stringify(updatedFilms));
-  };
-
-  const savePhotosToStorage = async (updatedPhotos: PhotoEntry[]) => {
-    setPhotos(updatedPhotos);
-    await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(updatedPhotos));
-  };
-
-  const saveNotesToStorage = async (updatedNotes: Record<string, DailyNoteItem>) => {
-    setDailyNotes(updatedNotes);
-    await AsyncStorage.setItem(STORAGE_KEYS.DAILY_NOTES, JSON.stringify(updatedNotes));
-  };
-
-  // Action: Add Daily Photo (Immediate visibility, no film/darkroom)
+  // ── Photo: Add daily ──────────────────────────────────────────────────────
   const addDailyPhoto = async (data: {
     photoUri?: string;
     note?: string;
@@ -187,54 +181,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mood?: string | null;
     location?: string | null;
   }) => {
-    const todayStr = getTodayKey();
-    const todayFullStr = getFormattedTodayFull();
-    const timeStr = getFormattedTime();
     const isoNow = new Date().toISOString();
-
-    const newPhotoId = `daily-${Date.now()}`;
+    const todayStr = DEFAULT_TODAY_KEY;
     const newPhoto: PhotoEntry = {
-      id: newPhotoId,
+      id: `daily-${Date.now()}`,
       captureMode: 'daily',
       status: 'developed',
       visibility: 'immediate',
-      photoUri: data.photoUri,
       filmId: null,
       filmTitle: null,
-      frameNumber: null,
-      frameCode: null,
-      date: todayFullStr,
-      time: timeStr,
-      sceneType: 'sunset-seaside',
-      bgColors: ['#FFF1B0', '#FFD7EC'],
+      date: getFormattedTodayFull(),
+      time: getFormattedTime(),
+      photoUri: data.photoUri,
       note: data.note || '',
-      song: data.song
-        ? {
-            title: data.song.title,
-            artist: data.song.artist,
-          }
-        : undefined,
+      song: data.song ? { title: data.song.title, artist: data.song.artist } : undefined,
       mood: data.mood || undefined,
       location: data.location || undefined,
-      capturedAt: isoNow,
+      bgColors: ['#FFB88C', '#DE6262'],
+      sceneType: 'coffee-table',
       developedAt: isoNow,
     };
 
     const updatedPhotos = [newPhoto, ...photos];
     await savePhotosToStorage(updatedPhotos);
 
-    // Sync note/mood/song with daily notes if present
     if (data.note || data.mood || data.song) {
       await saveDailyNote(todayStr, {
         note: data.note || dailyNotes[todayStr]?.note || '',
         mood: data.mood || dailyNotes[todayStr]?.mood,
         location: data.location || dailyNotes[todayStr]?.location,
-        song: data.song ? { title: data.song.title, artist: data.song.artist } : dailyNotes[todayStr]?.song,
+        song: data.song
+          ? { title: data.song.title, artist: data.song.artist }
+          : dailyNotes[todayStr]?.song,
       });
     }
   };
 
-  // Action: Add Film Photo (Locked frame, adds to active film)
+  // ── Photo: Add film frame ─────────────────────────────────────────────────
   const addFilmPhoto = async (data: {
     photoUri?: string;
     note?: string;
@@ -242,59 +225,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mood?: string | null;
     location?: string | null;
     filmId?: string;
-  }) => {
+  }): Promise<{ isFilmComplete: boolean; filmId?: string }> => {
     const targetFilm = (data.filmId ? films.find((f) => f.id === data.filmId) : null) || activeFilm;
-    if (!targetFilm) return;
+    if (!targetFilm) return { isFilmComplete: false };
 
-    const currentFramesCount = targetFilm.currentFrames ?? targetFilm.frameCount ?? 0;
-    const nextFrame = currentFramesCount + 1;
+    const currentCount = targetFilm.capturedFrames ?? targetFilm.currentFrames ?? targetFilm.frameCount ?? 0;
+    const nextFrame = currentCount + 1;
     const isFilmFinished = nextFrame >= targetFilm.totalFrames;
 
-    // 1. Update Active Film Frame Count
-    const updatedFilms = films.map((film) => {
-      if (film.id === targetFilm.id) {
-        return {
-          ...film,
-          currentFrames: Math.min(film.totalFrames, nextFrame),
-          remainingFrames: Math.max(0, film.totalFrames - nextFrame),
-          frameCount: Math.min(film.totalFrames, nextFrame),
-          status: isFilmFinished ? ('developing' as const) : film.status,
-        };
-      }
-      return film;
-    });
+    // Update film
+    const newFilmPhoto: FilmPhoto = {
+      id: `${targetFilm.id}-f${nextFrame}`,
+      frameNumber: nextFrame,
+      code: `${String(nextFrame).padStart(2, '0')}A`,
+      sceneTitle: 'film karesi',
+      dateStr: getFormattedTodayFull().slice(0, 5),
+      isExposed: true,
+      bgColors: ['#FFB88C', '#DE6262'],
+      iconName: 'photo',
+    };
 
+    const updatedFilms = films.map((film) => {
+      if (film.id !== targetFilm.id) return film;
+      const existingPhotos = film.photos || [];
+      return {
+        ...film,
+        capturedFrames: Math.min(film.totalFrames, nextFrame),
+        frameCount: Math.min(film.totalFrames, nextFrame),
+        currentFrames: Math.min(film.totalFrames, nextFrame),
+        remainingFrames: Math.max(0, film.totalFrames - nextFrame),
+        status: isFilmFinished ? ('readyToDevelop' as const) : film.status,
+        completedAt: isFilmFinished ? new Date().toISOString() : film.completedAt,
+        photos: [...existingPhotos.filter((p) => p.frameNumber !== nextFrame), newFilmPhoto],
+      };
+    });
     await saveFilmsToStorage(updatedFilms);
 
-    // 2. Create Photo Entry
-    const newPhotoId = `${activeFilm.id}-${nextFrame}-${Date.now()}`;
+    // Create photo entry
     const newPhoto: PhotoEntry = {
-      id: newPhotoId,
-      filmId: activeFilm.id,
-      filmTitle: activeFilm.title,
+      id: `${targetFilm.id}-${nextFrame}-${Date.now()}`,
+      captureMode: 'film',
+      filmId: targetFilm.id,
+      filmTitle: targetFilm.name || targetFilm.title,
       frameNumber: nextFrame,
-      code: `${nextFrame < 10 ? '0' : ''}${nextFrame}A`,
+      code: `${String(nextFrame).padStart(2, '0')}A`,
       date: getFormattedTodayFull(),
       time: getFormattedTime(),
-      serial: `SG-0726-0${nextFrame}`,
       status: 'locked',
       sceneType: 'sunset-seaside',
       bgColors: ['#FFB88C', '#DE6262'],
       note: data.note || '',
-      song: data.song
-        ? {
-            title: data.song.title,
-            artist: data.song.artist,
-          }
-        : undefined,
+      song: data.song ? { title: data.song.title, artist: data.song.artist } : undefined,
       mood: data.mood || undefined,
       location: data.location || undefined,
+      photoUri: data.photoUri,
     };
 
-    const updatedPhotos = [newPhoto, ...photos];
-    await savePhotosToStorage(updatedPhotos);
+    await savePhotosToStorage([newPhoto, ...photos]);
 
-    // 3. If note/song/mood added, sync with today's daily note
     if (data.note || data.mood || data.song) {
       await saveDailyNote(DEFAULT_TODAY_KEY, {
         note: data.note || dailyNotes[DEFAULT_TODAY_KEY]?.note || '',
@@ -303,9 +291,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         song: data.song ? { title: data.song.title, artist: data.song.artist } : dailyNotes[DEFAULT_TODAY_KEY]?.song,
       });
     }
+
+    return { isFilmComplete: isFilmFinished, filmId: targetFilm.id };
   };
 
-  // Action: Backwards compatible addPhotoFrame wrapper
+  // ── Photo: Unified addPhotoFrame ──────────────────────────────────────────
   const addPhotoFrame = async (data: {
     photoUri?: string;
     note?: string;
@@ -314,176 +304,200 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     location?: string | null;
     filter?: string;
     mode?: CaptureMode;
-  }) => {
+  }): Promise<{ isFilmComplete: boolean; filmId?: string }> => {
     const modeToUse = data.mode || currentCaptureMode;
     if (modeToUse === 'daily') {
       await addDailyPhoto(data);
-    } else {
-      await addFilmPhoto(data);
+      return { isFilmComplete: false };
     }
+    return addFilmPhoto(data);
   };
 
-  // Action: Update Photo Frame (Note, Song, Mood, Location)
   const updatePhotoFrame = async (id: string, updates: Partial<PhotoEntry>) => {
-    const updatedPhotos = photos.map((photo) => {
-      if (photo.id === id) {
-        return { ...photo, ...updates };
-      }
-      return photo;
-    });
-    await savePhotosToStorage(updatedPhotos);
+    const updated = photos.map((p) => (p.id === id ? { ...p, ...updates } : p));
+    await savePhotosToStorage(updated);
   };
 
-  // Action: Delete Photo Frame
   const deletePhotoFrame = async (id: string) => {
-    const targetPhoto = photos.find((p) => p.id === id);
-    const updatedPhotos = photos.filter((p) => p.id !== id);
-    await savePhotosToStorage(updatedPhotos);
-
-    // Increment remaining frames for the parent film if active
-    if (targetPhoto && targetPhoto.filmId) {
-      const updatedFilms = films.map((film) => {
-        if (film.id === targetPhoto.filmId) {
-          const currentCount = film.currentFrames ?? film.frameCount ?? 0;
-          const newCurrent = Math.max(0, currentCount - 1);
-          return {
-            ...film,
-            currentFrames: newCurrent,
-            frameCount: newCurrent,
-            remainingFrames: film.totalFrames - newCurrent,
-          };
-        }
-        return film;
+    const target = photos.find((p) => p.id === id);
+    await savePhotosToStorage(photos.filter((p) => p.id !== id));
+    if (target?.filmId) {
+      const updated = films.map((f) => {
+        if (f.id !== target.filmId) return f;
+        const newCount = Math.max(0, (f.capturedFrames ?? f.currentFrames ?? f.frameCount ?? 0) - 1);
+        return { ...f, capturedFrames: newCount, frameCount: newCount, currentFrames: newCount, remainingFrames: f.totalFrames - newCount };
       });
-      await saveFilmsToStorage(updatedFilms);
+      await saveFilmsToStorage(updated);
     }
   };
 
-  // Action: Create New Film Roll
+  // ── Film: Create ──────────────────────────────────────────────────────────
   const createNewFilm = async (filmData: {
-    title: string;
-    iso: string;
+    name: string;
+    filmTypeName: string;
+    filmTypeId?: string;
     totalFrames: number;
-    description?: string;
     coverColor?: string;
-  }) => {
-    const newFilmId = `film-${Date.now()}`;
-    const isoNum = parseInt(filmData.iso.replace(/\D/g, ''), 10) || 400;
+    iso?: number;
+  }): Promise<string> => {
+    const filmName = filmData.name.trim() || generateAutoFilmName();
+    const iso = filmData.iso || 400;
+    const newId = `film-${Date.now()}`;
+
     const newFilm: FilmItem = {
-      id: newFilmId,
-      title: filmData.title.toLowerCase(),
-      type: `35mm · iso ${isoNum}`,
-      iso: isoNum,
-      dateLabel: 'temmuz 2026',
+      id: newId,
+      name: filmName,
+      title: filmName,
+      filmTypeName: filmData.filmTypeName || 'Summer Glow',
+      filmTypeId: filmData.filmTypeId,
+      type: `35mm · iso ${iso}`,
+      iso,
       totalFrames: filmData.totalFrames,
-      currentFrames: 0,
+      capturedFrames: 0,
       frameCount: 0,
+      currentFrames: 0,
       remainingFrames: filmData.totalFrames,
       status: 'active',
-      color: filmData.coverColor || '#CBEBFC',
-      darkColor: '#2B83BA',
-      serial: `POZ-0726-${filmData.totalFrames}`,
-      stampText: `35MM ISO ${isoNum}`,
+      colorToken: filmData.coverColor || '#111827',
+      color: filmData.coverColor || '#111827',
+      serial: `POZ-${newId.slice(-6).toUpperCase()}`,
+      stampText: `35MM ISO ${iso}`,
       coverIcon: 'films',
-      rotation: '-1.5deg',
-      createdDate: '28 temmuz 2026',
-      startDate: '28 temmuz 2026',
-      description: filmData.description || 'Yeni açılan 35mm film rulosu.',
+      rotation: '-1.2deg',
+      dateLabel: 'temmuz 2026',
+      createdAt: new Date().toISOString(),
+      createdDate: getFormattedTodayFull(),
+      startDate: getFormattedTodayFull(),
+      photos: [],
+      notes: [],
+      songs: [],
+      moods: [],
     };
 
-    const updatedFilms = [newFilm, ...films];
-    await saveFilmsToStorage(updatedFilms);
-    await setActiveFilm(newFilmId);
+    const updated = [newFilm, ...films];
+    await saveFilmsToStorage(updated);
+
+    // Auto-select this film
+    setSelectedFilmId(newId);
+    await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_FILM_ID, newId);
+
+    return newId;
   };
 
-  // Action: Develop / Unlock Film
+  // ── Film: Select active ───────────────────────────────────────────────────
+  const selectActiveFilm = async (filmId: string) => {
+    setSelectedFilmId(filmId);
+    await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_FILM_ID, filmId);
+  };
+
+  const setActiveFilm = selectActiveFilm; // alias
+
+  // ── Film: Finish early (→ readyToDevelop) ────────────────────────────────
+  const finishFilmEarly = async (filmId: string) => {
+    const updated = films.map((f) => {
+      if (f.id !== filmId) return f;
+      return { ...f, status: 'readyToDevelop' as const, completedAt: new Date().toISOString() };
+    });
+    await saveFilmsToStorage(updated);
+  };
+
+  // ── Film: Send to develop (→ developing) ─────────────────────────────────
+  const sendFilmToDevelop = async (filmId: string) => {
+    const updated = films.map((f) => {
+      if (f.id !== filmId) return f;
+      return {
+        ...f,
+        status: 'developing' as const,
+        developingStartedAt: new Date().toISOString(),
+      };
+    });
+    await saveFilmsToStorage(updated);
+  };
+
+  // ── Film: Mark developed / unlock all photos ──────────────────────────────
   const developFilm = async (filmId: string) => {
-    const updatedFilms = films.map((film) => {
-      if (film.id === filmId) {
-        return {
-          ...film,
-          status: 'completed' as const,
-          remainingFrames: 0,
-        };
-      }
-      return film;
+    const updatedFilms = films.map((f) => {
+      if (f.id !== filmId) return f;
+      return {
+        ...f,
+        status: 'completed' as const,
+        developedAt: new Date().toISOString(),
+        developedDate: getFormattedTodayFull(),
+        remainingFrames: 0,
+        photos: (f.photos || []).map((p) => ({ ...p, isExposed: true })),
+      };
     });
     await saveFilmsToStorage(updatedFilms);
 
-    // Unlock all photos belonging to this film
-    const updatedPhotos = photos.map((photo) => {
-      if (photo.filmId === filmId) {
-        return { ...photo, status: 'unlocked' as const };
-      }
-      return photo;
+    const updatedPhotos = photos.map((p) => {
+      if (p.filmId !== filmId) return p;
+      return { ...p, status: 'developed' as const, visibility: 'immediate' as const };
     });
     await savePhotosToStorage(updatedPhotos);
   };
 
-  // Action: Delete Film Roll
+  // ── Film: Archive ─────────────────────────────────────────────────────────
+  const archiveFilm = async (filmId: string) => {
+    const updated = films.map((f) => {
+      if (f.id !== filmId) return f;
+      return { ...f, status: 'archived' as const };
+    });
+    await saveFilmsToStorage(updated);
+  };
+
+  // ── Film: Delete ──────────────────────────────────────────────────────────
   const deleteFilm = async (filmId: string) => {
     const updatedFilms = films.filter((f) => f.id !== filmId);
     await saveFilmsToStorage(updatedFilms);
-
-    const updatedPhotos = photos.filter((p) => p.filmId !== filmId);
-    await savePhotosToStorage(updatedPhotos);
-
-    if (activeFilmId === filmId && updatedFilms.length > 0) {
-      await setActiveFilm(updatedFilms[0].id);
+    await savePhotosToStorage(photos.filter((p) => p.filmId !== filmId));
+    if (selectedFilmId === filmId) {
+      const nextActive = updatedFilms.find((f) => f.status === 'active');
+      const nextId = nextActive?.id ?? null;
+      setSelectedFilmId(nextId);
+      if (nextId) await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_FILM_ID, nextId);
     }
   };
 
-  // Action: Set Active Film
-  const setActiveFilm = async (filmId: string) => {
-    setActiveFilmIdState(filmId);
-    await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_FILM_ID, filmId);
-  };
-
-  // Action: Save Daily Note (Create/Update)
+  // ── Daily notes ───────────────────────────────────────────────────────────
   const saveDailyNote = async (dateKey: string, noteData: Partial<DailyNoteItem>) => {
-    const existing = dailyNotes[dateKey] || {
-      dateKey,
-      note: '',
-      timestamp: '22:45 • ev',
-    };
-
-    const updatedNotes = {
+    const existing = dailyNotes[dateKey] || { dateKey, note: '', timestamp: '' };
+    const updated = {
       ...dailyNotes,
-      [dateKey]: {
-        ...existing,
-        ...noteData,
-        dateKey,
-      },
+      [dateKey]: { ...existing, ...noteData, dateKey },
     };
-    await saveNotesToStorage(updatedNotes);
+    await saveNotesToStorage(updated);
   };
 
-  // Action: Delete Daily Note
   const deleteDailyNote = async (dateKey: string) => {
-    const updatedNotes = { ...dailyNotes };
-    delete updatedNotes[dateKey];
-    await saveNotesToStorage(updatedNotes);
+    const updated = { ...dailyNotes };
+    delete updated[dateKey];
+    await saveNotesToStorage(updated);
   };
 
+  // ─── Provider value ────────────────────────────────────────────────────────
   return (
     <AppContext.Provider
       value={{
         films,
         activeFilm,
+        selectedActiveFilmId,
         photos,
         dailyNotes,
         isLoading,
         currentCaptureMode,
         selectCaptureMode,
         addDailyPhoto,
-        addFilmPhoto,
         addPhotoFrame,
         updatePhotoFrame,
         deletePhotoFrame,
         createNewFilm,
-        developFilm,
-        deleteFilm,
+        selectActiveFilm,
         setActiveFilm,
+        sendFilmToDevelop,
+        finishFilmEarly,
+        developFilm,
+        archiveFilm,
+        deleteFilm,
         saveDailyNote,
         deleteDailyNote,
       }}
@@ -495,8 +509,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
+  if (!context) throw new Error('useApp must be used within an AppProvider');
   return context;
 };

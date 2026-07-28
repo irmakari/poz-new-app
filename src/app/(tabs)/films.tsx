@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing } from '@/constants/theme';
-import { FilmsHeader } from '@/components/FilmsHeader';
 import { ActiveFilmCard } from '@/components/ActiveFilmCard';
-import { FilmFilter, FilterCategory } from '@/components/FilmFilter';
+import { ArchiveFilmCard } from '@/components/ArchiveFilmCard';
 import { CompletedFilmBox } from '@/components/CompletedFilmBox';
 import { DevelopingFilmCard } from '@/components/DevelopingFilmCard';
-import { ArchiveFilmCard } from '@/components/ArchiveFilmCard';
-import { NewFilmCard } from '@/components/NewFilmCard';
 import { EmptyFilterView } from '@/components/EmptyFilterView';
+import { FilmFilter, FilterCategory } from '@/components/FilmFilter';
+import { FilmsHeader } from '@/components/FilmsHeader';
+import { NewFilmCard } from '@/components/NewFilmCard';
 import { SectionTitle } from '@/components/SectionTitle';
-import { FilmItem } from '@/utils/filmData';
+import { Colors, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { FilmItem } from '@/utils/filmData';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function FilmsScreen() {
   const router = useRouter();

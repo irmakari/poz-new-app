@@ -1,27 +1,33 @@
+import { FilmProgress } from '@/components/FilmProgress';
+import { PaperStamp } from '@/components/PaperStamp';
+import { PozIcon } from '@/components/PozIcon';
+import { ScrapbookCard } from '@/components/ScrapbookCard';
+import { SectionTitle } from '@/components/SectionTitle';
+import { SongPickerModal } from '@/components/SongPickerModal';
+import { TapeDecoration } from '@/components/TapeDecoration';
+import { WeekSelector } from '@/components/WeekSelector';
+import { BorderRadius, Colors, Fonts, Spacing } from '@/constants/theme';
+import { useApp } from '@/context/AppContext';
+import { MockSongItem } from '@/utils/captureReviewData';
+import { getFormattedTime, getFormattedTodayHeader, getTodayKey } from '@/utils/dateUtils';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  TextInput,
   Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { ScrapbookCard } from '@/components/ScrapbookCard';
-import { TapeDecoration } from '@/components/TapeDecoration';
-import { PaperStamp } from '@/components/PaperStamp';
-import { FilmProgress } from '@/components/FilmProgress';
-import { WeekSelector } from '@/components/WeekSelector';
-import { SectionTitle } from '@/components/SectionTitle';
-import { PozIcon } from '@/components/PozIcon';
-import { useApp } from '@/context/AppContext';
-import { getTodayKey, getFormattedTodayHeader, getFormattedTime } from '@/utils/dateUtils';
+
+const HOME_MOOD_OPTIONS = ['huzurlu', 'mutlu', 'coşkulu', 'sakin', 'taze', 'yorgun', 'özlemli', 'heyecanlı'];
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { activeFilm, dailyNotes, photos, saveDailyNote, deleteDailyNote } = useApp();
 
   const todayKey = getTodayKey();
@@ -38,9 +44,11 @@ export default function HomeScreen() {
   const filmCount = todayFilmPhotos.length;
   const totalPhotosCount = dailyCount + filmCount;
 
-  // Note edit modal state
+  // Modal States for Cards
   const [isEditNoteModalOpen, setIsEditNoteModalOpen] = useState(false);
   const [noteInputText, setNoteInputText] = useState(todayNoteObj?.note || '');
+  const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
+  const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
 
   const handleSaveNote = async () => {
     await saveDailyNote(todayKey, { note: noteInputText });
@@ -184,13 +192,14 @@ export default function HomeScreen() {
               hasTape="top-right"
               tapeColor={Colors.tapeDefault}
               padding={Spacing.md}
+              onPress={() => setIsMoodModalOpen(true)}
               style={styles.greenStickerCard}
             >
               <View style={styles.moodHeaderRow}>
-                <PozIcon name="sparkle" size={20} color="#FFFDF6" />
-                <Text style={[styles.moodTagText, { color: Colors.lightText }]}>bugünkü hissin</Text>
+                <PozIcon name="sparkle" size={18} color="#F4ECE2" />
+                <Text style={styles.moodTagText}>bugünkü hissin</Text>
               </View>
-              <Text style={[styles.moodValueText, { color: Colors.lightText }]}>
+              <Text style={styles.moodValueText} numberOfLines={1}>
                 {hasMood ? todayNoteObj!.mood : 'henüz taze'}
               </Text>
 
@@ -209,13 +218,16 @@ export default function HomeScreen() {
               hasTape="top-right"
               tapeColor={Colors.tapeLavender}
               padding={Spacing.md}
+              onPress={() => router.push({ pathname: '/day/[date]', params: { date: todayKey } })}
               style={styles.bluePhotosCard}
             >
               <View style={styles.cardHeaderRow}>
-                <Text style={[styles.cardHeaderTitle, { color: Colors.lightText }]}>bugünün kareleri</Text>
-                <Text style={[styles.photoCountBadge, { color: Colors.filmBlue }]}>
-                  {dailyCount > 0 || filmCount > 0 ? `${dailyCount} BASKI • ${filmCount} FİLM` : '0 KARE'}
-                </Text>
+                <Text style={styles.cardHeaderTitleLight}>bugünün kareleri</Text>
+                <View style={styles.photoCountPill}>
+                  <Text style={styles.photoCountPillText} numberOfLines={1}>
+                    {dailyCount > 0 || filmCount > 0 ? `${dailyCount} BASKI • ${filmCount} FİLM` : '0 KARE'}
+                  </Text>
+                </View>
               </View>
 
               {/* Physical Stacked Polaroid Prints */}
@@ -225,16 +237,16 @@ export default function HomeScreen() {
                     {/* Back Photo Print (Daily or Film) */}
                     <View style={styles.photoPrintBack}>
                       <View style={styles.negativeDarkFill}>
-                        <PozIcon name={filmCount > 0 ? 'films' : 'photo'} size={22} color="rgba(255, 255, 255, 0.4)" />
+                        <PozIcon name={filmCount > 0 ? 'films' : 'photo'} size={20} color="#8FA8B8" />
                       </View>
                       <Text style={styles.printCodeText}>{dailyCount > 0 ? 'GÜNLÜK BASKI' : 'FİLM KARESI'}</Text>
                     </View>
 
                     {/* Front Photo Print */}
                     <View style={styles.photoPrintFront}>
-                      <TapeDecoration position="top-right" width={32} height={10} color={Colors.tapeDefault} />
+                      <TapeDecoration position="top-right" width={30} height={9} color={Colors.tapeDefault} />
                       <View style={styles.negativeDarkFillFront}>
-                        <PozIcon name={dailyCount > 0 ? 'photo' : 'camera'} size={24} color={Colors.plum} />
+                        <PozIcon name={dailyCount > 0 ? 'photo' : 'camera'} size={22} color="#8FA8B8" />
                       </View>
                       <Text style={styles.printCodeText}>
                         {dailyCount > 0 ? `${dailyCount} GÜNLÜK FOTOĞRAF` : `${filmCount} FİLM KARESI`}
@@ -243,8 +255,8 @@ export default function HomeScreen() {
                   </>
                 ) : (
                   <View style={{ alignItems: 'center', justifyContent: 'center', height: 110, gap: 4 }}>
-                    <PozIcon name="camera" size={32} color={Colors.filmBlue} />
-                    <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.filmBlue, textAlign: 'center' }}>
+                    <PozIcon name="camera" size={30} color="#8FA8B8" />
+                    <Text style={{ fontSize: 10.5, fontFamily: Fonts.mono, color: '#8FA8B8', textAlign: 'center' }}>
                       henüz kare çekilmedi
                     </Text>
                   </View>
@@ -259,23 +271,24 @@ export default function HomeScreen() {
               hasTape="bottom-left"
               tapeColor={Colors.tapeDefault}
               padding={Spacing.md}
+              onPress={() => setIsSongPickerOpen(true)}
               style={styles.pinkSongCard}
             >
               <View style={styles.cardHeaderRow}>
-                <PozIcon name="music" size={18} color="#FFFDF6" />
-                <Text style={[styles.songLabel, { color: Colors.lightText }]}>günün şarkısı</Text>
+                <PozIcon name="music" size={16} color="#F4ECE2" />
+                <Text style={styles.songLabelLight}>günün şarkısı</Text>
               </View>
 
               {/* Physical Cassette Label / Album Badge */}
               <View style={styles.cassetteContainer}>
                 <View style={styles.albumCoverBox}>
-                  <PozIcon name="music" size={20} color="#FFFDF6" />
+                  <PozIcon name="music" size={18} color="#F4ECE2" />
                 </View>
                 <View style={styles.songInfoGroup}>
-                  <Text style={[styles.songTitleText, { color: Colors.lightText }]} numberOfLines={1}>
+                  <Text style={styles.songTitleTextLight} numberOfLines={1}>
                     {hasSong ? todayNoteObj!.song!.title : 'şarkı seçilmedi'}
                   </Text>
-                  <Text style={[styles.artistNameText, { color: Colors.filmBlue }]} numberOfLines={1}>
+                  <Text style={styles.artistNameTextLight} numberOfLines={1}>
                     {hasSong ? todayNoteObj!.song!.artist : 'dokunarak ekle 🎵'}
                   </Text>
                 </View>
@@ -283,12 +296,12 @@ export default function HomeScreen() {
 
               {/* Tape Notches / Sound Wave */}
               <View style={styles.audioWaveformMock}>
-                <View style={[styles.waveBar, { height: 10 }]} />
-                <View style={[styles.waveBar, { height: 18 }]} />
-                <View style={[styles.waveBar, { height: 12 }]} />
-                <View style={[styles.waveBar, { height: 22 }]} />
-                <View style={[styles.waveBar, { height: 14 }]} />
                 <View style={[styles.waveBar, { height: 8 }]} />
+                <View style={[styles.waveBar, { height: 16 }]} />
+                <View style={[styles.waveBar, { height: 10 }]} />
+                <View style={[styles.waveBar, { height: 20 }]} />
+                <View style={[styles.waveBar, { height: 12 }]} />
+                <View style={[styles.waveBar, { height: 6 }]} />
               </View>
             </ScrapbookCard>
           </View>
@@ -341,6 +354,72 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Mood Selector Modal */}
+      <Modal
+        visible={isMoodModalOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsMoodModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleText}>bugünkü hissini seç</Text>
+              <TouchableOpacity
+                onPress={() => setIsMoodModalOpen(false)}
+                style={styles.closeButton}
+              >
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 12 }}>
+              {HOME_MOOD_OPTIONS.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  activeOpacity={0.8}
+                  onPress={async () => {
+                    await saveDailyNote(todayKey, { mood: m });
+                    setIsMoodModalOpen(false);
+                  }}
+                  style={{
+                    backgroundColor: todayNoteObj?.mood === m ? Colors.olive : Colors.paper,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    borderRadius: BorderRadius.md,
+                    borderWidth: 1,
+                    borderColor: Colors.border,
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: Fonts.sansBold,
+                    fontSize: 13,
+                    color: todayNoteObj?.mood === m ? '#F4ECE2' : Colors.ink
+                  }}>
+                    {m}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Song Picker Modal */}
+      <SongPickerModal
+        visible={isSongPickerOpen}
+        onClose={() => setIsSongPickerOpen(false)}
+        onSelectSong={async (songItem: MockSongItem) => {
+          await saveDailyNote(todayKey, {
+            song: {
+              title: songItem.title,
+              artist: songItem.artist,
+            },
+          });
+          setIsSongPickerOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -579,44 +658,59 @@ const styles = StyleSheet.create({
   },
   moodTagText: {
     fontSize: 11,
-    color: Colors.greenDark,
+    color: '#F4ECE2',
     fontFamily: Fonts.mono,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   moodValueText: {
-    fontSize: 24,
-    color: Colors.text,
+    fontSize: 22,
+    color: '#F4ECE2',
     fontFamily: Fonts.sansBlack,
     marginVertical: 2,
   },
   stickerBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: Colors.greenDark,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     borderStyle: 'dashed',
   },
   stickerText: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: Colors.greenDark,
+    color: '#F4ECE2',
+    fontWeight: '800',
   },
 
   /* Blue Photo Prints Card */
   bluePhotosCard: {
     minHeight: 190,
   },
-  photoCountBadge: {
+  cardHeaderTitleLight: {
+    fontSize: 11.5,
+    color: '#F4ECE2',
     fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.lavenderDark,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  photoCountPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    maxWidth: 110,
+  },
+  photoCountPillText: {
+    fontFamily: Fonts.mono,
+    fontSize: 8.5,
+    color: '#8FA8B8',
+    fontWeight: '800',
   },
   photoStackContainer: {
     height: 125,
@@ -629,7 +723,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 105,
     height: 95,
-    backgroundColor: '#FFFDF9',
+    backgroundColor: '#F7F2EA',
     borderRadius: 4,
     padding: 5,
     transform: [{ rotate: '-8deg' }],
@@ -643,15 +737,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 110,
     height: 102,
-    backgroundColor: '#FFFDF9',
+    backgroundColor: '#F7F2EA',
     borderRadius: 4,
     padding: 5,
     transform: [{ rotate: '4deg' }],
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: Colors.text,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.18,
     shadowRadius: 5,
     elevation: 4,
     alignItems: 'center',
@@ -659,7 +753,7 @@ const styles = StyleSheet.create({
   negativeDarkFill: {
     width: '100%',
     height: 64,
-    backgroundColor: '#1E1B26',
+    backgroundColor: '#111827',
     borderRadius: 3,
     alignItems: 'center',
     justifyContent: 'center',
@@ -667,7 +761,7 @@ const styles = StyleSheet.create({
   negativeDarkFillFront: {
     width: '100%',
     height: 70,
-    backgroundColor: '#181520',
+    backgroundColor: '#111827',
     borderRadius: 3,
     alignItems: 'center',
     justifyContent: 'center',
@@ -677,19 +771,21 @@ const styles = StyleSheet.create({
   printCodeText: {
     fontSize: 8,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
-    marginTop: 4,
+    color: Colors.ink,
+    marginTop: 3,
+    fontWeight: '700',
   },
 
   /* Pink Song Card */
   pinkSongCard: {
     minHeight: 135,
   },
-  songLabel: {
+  songLabelLight: {
     fontSize: 11,
-    color: Colors.pinkDark,
+    color: '#F4ECE2',
     fontFamily: Fonts.mono,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   cassetteContainer: {
     flexDirection: 'row',
@@ -698,27 +794,29 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   albumCoverBox: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 6,
-    backgroundColor: Colors.pinkDark,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFDF9',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   songInfoGroup: {
     flex: 1,
   },
-  songTitleText: {
-    fontSize: 15,
-    color: Colors.text,
-    fontFamily: Fonts.sansExtraBold,
+  songTitleTextLight: {
+    fontSize: 14,
+    color: '#F4ECE2',
+    fontFamily: Fonts.sansBlack,
+    letterSpacing: -0.3,
   },
-  artistNameText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: Fonts.sans,
+  artistNameTextLight: {
+    fontSize: 11.5,
+    color: '#8FA8B8',
+    fontFamily: Fonts.sansMedium,
+    marginTop: 1,
   },
   audioWaveformMock: {
     flexDirection: 'row',
@@ -729,9 +827,9 @@ const styles = StyleSheet.create({
   },
   waveBar: {
     width: 4,
-    backgroundColor: Colors.pinkDark,
+    backgroundColor: '#F4ECE2',
     borderRadius: 2,
-    opacity: 0.7,
+    opacity: 0.85,
   },
   modalOverlay: {
     flex: 1,

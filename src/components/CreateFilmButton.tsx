@@ -1,16 +1,15 @@
+import { PozIcon } from '@/components/PozIcon';
+import { BorderRadius, Colors, Fonts, Spacing } from '@/constants/theme';
+import { FilmPurposeOption, FilmTypeOption, FrameOption } from '@/utils/newFilmData';
+import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { PozIcon } from '@/components/PozIcon';
-import { FilmTypeOption, FilmPurposeOption, FrameOption } from '@/utils/newFilmData';
-import { addNewFilm, FilmItem } from '@/utils/filmData';
 
 import { useApp } from '@/context/AppContext';
 
@@ -32,7 +31,7 @@ export const CreateFilmButton: React.FC<CreateFilmButtonProps> = ({
   serialNumber,
 }) => {
   const router = useRouter();
-  const { createNewFilm } = useApp();
+  const { createNewFilm, selectCaptureMode } = useApp();
   const [isCreating, setIsCreating] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -63,19 +62,21 @@ export const CreateFilmButton: React.FC<CreateFilmButtonProps> = ({
       useNativeDriver: true,
     }).start();
 
-    // 3. Create new FilmItem in AsyncStorage AppContext
+    // 3. Create new FilmItem & set capture mode to 'film'
+    await selectCaptureMode('film');
     await createNewFilm({
-      title: displayName,
-      iso: `ISO ${filmType.iso}`,
+      name: displayName,
+      filmTypeName: filmType.name,
+      filmTypeId: filmType.id,
       totalFrames: frameCount.count,
-      description: `${purpose.label} için oluşturulan ${frameCount.count} pozluk film.`,
       coverColor: filmType.primaryColor,
+      iso: filmType.iso,
     });
 
-    // 4. Redirect to Films Screen after 900ms
+    // 4. Redirect directly to Camera Screen after 900ms
     setTimeout(() => {
       setIsCreating(false);
-      router.replace('/(tabs)/films');
+      router.replace('/(tabs)/camera');
     }, 900);
   };
 

@@ -1,27 +1,27 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Linking,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import { CameraHeader } from '@/components/CameraHeader';
+import { CaptureModeSelector } from '@/components/CaptureModeSelector';
+import { CaptureOverlay } from '@/components/CaptureOverlay';
+import { FilmInfoLabel } from '@/components/FilmInfoLabel';
+import { CameraFacing, FlashState, MockViewfinder } from '@/components/MockViewfinder';
+import { PozIcon } from '@/components/PozIcon';
+import { ShutterButton } from '@/components/ShutterButton';
+import { BorderRadius, Colors, Fonts, Spacing } from '@/constants/theme';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { CameraHeader } from '@/components/CameraHeader';
-import { MockViewfinder, FlashState, CameraFacing } from '@/components/MockViewfinder';
-import { FilmInfoLabel } from '@/components/FilmInfoLabel';
-import { ShutterButton } from '@/components/ShutterButton';
-import { CaptureOverlay } from '@/components/CaptureOverlay';
-import { CaptureModeSelector } from '@/components/CaptureModeSelector';
-import { PozIcon } from '@/components/PozIcon';
 
 import { useApp } from '@/context/AppContext';
 
@@ -232,7 +232,7 @@ export default function CameraScreen() {
           {currentCaptureMode === 'film' ? (
             <>
               <FilmInfoLabel frameCount={(activeFilm?.totalFrames || 36) - remainingFrames} remainingFrames={remainingFrames} />
-              
+
               {/* Active Film Roll Selector if multiple films */}
               {activeFilmsList.length > 1 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 6 }}>

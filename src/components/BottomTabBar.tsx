@@ -1,13 +1,13 @@
+import { BorderRadius, Colors, Fonts } from '@/constants/theme';
 import React from 'react';
 import {
-  View,
+  Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Platform,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, BorderRadius, Fonts } from '@/constants/theme';
 import { PozIcon, PozIconName } from './PozIcon';
 
 export interface BottomTabBarProps {

@@ -39,6 +39,9 @@ export default function DailyCaptureReviewScreen() {
   const [selectedMood, setSelectedMood] = useState<string | null>('huzurlu');
   const [customMood, setCustomMood] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  // UI State
+  const [showDetails, setShowDetails] = useState(false);
   const [isSongModalVisible, setIsSongModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -59,18 +62,8 @@ export default function DailyCaptureReviewScreen() {
         location: selectedLocation,
       });
 
-      Alert.alert(
-        'Bugüne Eklendi! 📸',
-        'Fotoğrafın anında bugünün kayıtlarına ve fotoğraf baskılarına eklendi.',
-        [
-          {
-            text: 'Tamam',
-            onPress: () => {
-              router.replace('/(tabs)');
-            },
-          },
-        ]
-      );
+      // Navigate back to camera or home immediately
+      router.replace('/(tabs)/camera');
     } catch (e) {
       setIsSaving(false);
       Alert.alert('Hata', 'Fotoğraf kaydedilirken bir sorun oluştu.');
@@ -88,8 +81,12 @@ export default function DailyCaptureReviewScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top Header */}
-          <CaptureReviewHeader title="günlük çekim" />
+          {/* Top Header with Prominent KAYDET Button */}
+          <CaptureReviewHeader
+            title="günlük çekim"
+            onSave={handleAddToday}
+            isSaving={isSaving}
+          />
 
           {/* Large Visible Analog Polaroid Photo Print Card */}
           <View style={styles.photoPrintCard}>
@@ -121,56 +118,75 @@ export default function DailyCaptureReviewScreen() {
             </View>
           </View>
 
-          {/* Retake Photo Action Button */}
+          {/* Quick Primary Save Action Button */}
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleRetake}
-            style={styles.retakeButton}
+            activeOpacity={0.88}
+            onPress={handleAddToday}
+            disabled={isSaving}
+            style={styles.quickSaveButton}
           >
-            <PozIcon name="camera" size={16} color={Colors.text} />
-            <Text style={styles.retakeButtonText}>yeniden çek</Text>
+            <Text style={styles.quickSaveText}>
+              {isSaving ? 'KAYDEDİLİYOR...' : 'BUGÜNE EKLE & DEVAM ET ✓'}
+            </Text>
           </TouchableOpacity>
 
-          {/* Optional Note Input */}
-          <JournalNoteInput value={note} onChangeText={setNote} />
+          {/* Retake & Optional Details Actions */}
+          <View style={styles.secondaryActionsRow}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleRetake}
+              style={styles.retakeButton}
+            >
+              <PozIcon name="camera" size={16} color={Colors.ink} />
+              <Text style={styles.retakeButtonText}>yeniden çek</Text>
+            </TouchableOpacity>
 
-          {/* Song Selector */}
-          <SongSelectorCard
-            selectedSong={selectedSong}
-            onOpenPicker={() => setIsSongModalVisible(true)}
-            onRemoveSong={() => setSelectedSong(null)}
-          />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setShowDetails((prev) => !prev)}
+              style={styles.toggleDetailsButton}
+            >
+              <Text style={styles.toggleDetailsText}>
+                {showDetails ? '— Detayları Gizle' : '+ Not / His Ekle'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
+          {/* Optional Form Section */}
+          {showDetails && (
+            <View style={styles.optionalSection}>
+              {/* Optional Note Input */}
+              <JournalNoteInput value={note} onChangeText={setNote} />
+
+              {/* Song Selector */}
+              <SongSelectorCard
+                selectedSong={selectedSong}
+                onOpenPicker={() => setIsSongModalVisible(true)}
+                onRemoveSong={() => setSelectedSong(null)}
+              />
+
+              {/* Mood Sticker Selector */}
+              <MoodStickerSelector
+                selectedMood={selectedMood}
+                onSelectMood={setSelectedMood}
+                customMood={customMood}
+                onChangeCustomMood={setCustomMood}
+              />
+
+              {/* Location Selector */}
+              <LocationSelector
+                selectedLocation={selectedLocation}
+                onSelectLocation={setSelectedLocation}
+              />
+            </View>
+          )}
+
+          {/* Song Selection Sheet Modal */}
           <SongPickerModal
             visible={isSongModalVisible}
             onClose={() => setIsSongModalVisible(false)}
             onSelectSong={setSelectedSong}
           />
-
-          {/* Mood Selector */}
-          <MoodStickerSelector
-            selectedMood={selectedMood}
-            onSelectMood={setSelectedMood}
-            customMood={customMood}
-            onChangeCustomMood={setCustomMood}
-          />
-
-          {/* Location Selector */}
-          <LocationSelector
-            selectedLocation={selectedLocation}
-            onSelectLocation={setSelectedLocation}
-          />
-
-          {/* Primary CTA Button: Add to Today */}
-          <TouchableOpacity
-            activeOpacity={0.88}
-            disabled={isSaving}
-            onPress={handleAddToday}
-            style={styles.primaryAddButton}
-          >
-            <Text style={styles.primaryAddButtonText}>bugüne ekle</Text>
-            <PozIcon name="arrow-right" size={18} color="#FFFDF9" />
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -191,25 +207,24 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl + 20,
   },
   photoPrintCard: {
-    backgroundColor: '#FFFDF9',
-    borderRadius: BorderRadius.md,
-    padding: 12,
+    backgroundColor: '#F7F2EA',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    position: 'relative',
+    shadowColor: Colors.ink,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: Spacing.sm,
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
   photoContainer: {
-    width: '100%',
-    aspectRatio: 1.2,
-    borderRadius: BorderRadius.sm,
+    height: 280,
+    borderRadius: BorderRadius.md,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#1C1A24',
+    backgroundColor: '#111827',
   },
   photoImage: {
     width: '100%',
@@ -217,75 +232,99 @@ const styles = StyleSheet.create({
   },
   dateStampBadge: {
     position: 'absolute',
-    bottom: 10,
-    right: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
+    bottom: 12,
+    left: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
   dateStampText: {
+    color: '#FF6F61',
     fontSize: 12,
     fontFamily: Fonts.mono,
-    color: Colors.stampRed,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontWeight: '700',
   },
   printFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: Spacing.md,
     paddingHorizontal: 4,
   },
   printTitleText: {
-    fontSize: 14,
-    fontFamily: Fonts.sansExtraBold,
-    color: Colors.text,
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    color: Colors.ink,
+    fontWeight: '800',
   },
   printDateText: {
     fontSize: 11,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
-    marginTop: 1,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  quickSaveButton: {
+    backgroundColor: Colors.burgundy,
+    paddingVertical: 16,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.md,
+    shadowColor: Colors.burgundy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 236, 226, 0.3)',
+  },
+  quickSaveText: {
+    fontSize: 14,
+    fontFamily: Fonts.sansBlack,
+    color: '#F4ECE2',
+    letterSpacing: 0.5,
+  },
+  secondaryActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: Spacing.sm,
   },
   retakeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFDF9',
-    height: 44,
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#F7F2EA',
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    gap: 8,
-    marginBottom: Spacing.md,
   },
   retakeButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: Fonts.sansBold,
-    color: Colors.text,
+    color: Colors.ink,
   },
-  primaryAddButton: {
-    width: '100%',
-    flexDirection: 'row',
+  toggleDetailsButton: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#181520',
-    height: 54,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#F7F2EA',
     borderRadius: BorderRadius.md,
-    gap: 8,
-    marginTop: Spacing.lg,
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  primaryAddButtonText: {
-    fontSize: 16,
+  toggleDetailsText: {
+    fontSize: 12,
     fontFamily: Fonts.sansBold,
-    color: '#FFFDF9',
+    color: Colors.ink,
+  },
+  optionalSection: {
+    marginTop: Spacing.xs,
   },
 });

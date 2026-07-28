@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,26 +61,41 @@ export default function DayDetailScreen() {
       }
     : null;
 
+  // Local Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+  const [noteInputText, setNoteInputText] = React.useState(storedDailyNote?.note || mockEntry?.summaryText || '');
+  const [selectedMood, setSelectedMood] = React.useState(storedDailyNote?.mood || mockEntry?.mood || 'huzurlu');
+
+  const { saveDailyNote } = useApp();
+
   const handleEditAll = () => {
-    Alert.alert(
-      'Anılarını Düzenle',
-      'Ana sayfadaki not kartına basarak günün notunu hızlıca güncelleyebilirsin.',
-      [{ text: 'Tamam', style: 'default' }]
-    );
+    setNoteInputText(storedDailyNote?.note || mockEntry?.summaryText || '');
+    setSelectedMood(storedDailyNote?.mood || mockEntry?.mood || 'huzurlu');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveDayEdits = async () => {
+    await saveDailyNote(dateStr, {
+      note: noteInputText,
+      mood: selectedMood,
+    });
+    setIsEditModalOpen(false);
   };
 
   const handleDelete = () => {
     Alert.alert(
-      'Anıyı Sil',
-      'Bu güne ait notu silmek istediğine emin misin?',
+      'Günün Anısını Sil',
+      'Bu güne ait not ve anıları silmek istediğine emin misin?',
       [
         { text: 'Vazgeç', style: 'cancel' },
         {
-          text: 'Anıyı Sil',
+          text: 'Sil',
           style: 'destructive',
           onPress: async () => {
             await deleteDailyNote(dateStr);
-            Alert.alert('Silindi', 'Günün anısı silindi.');
+            setNoteInputText('');
+            setIsEditModalOpen(false);
+            Alert.alert('Silindi', 'Günün anısı başarıyla silindi.');
           },
         },
       ]
@@ -311,20 +328,100 @@ export default function DayDetailScreen() {
                 style={styles.primaryActionButton}
               >
                 <Text style={styles.primaryActionText}>anılarını düzenle</Text>
-                <PozIcon name="arrow-right" size={18} color="#FFFDF9" />
+                <PozIcon name="arrow-right" size={18} color="#F4ECE2" />
               </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleDelete}
                 style={styles.deleteIconButton}
+                accessibilityLabel="Günün anısını sil"
               >
-                <PozIcon name="bell" size={20} color={Colors.stampRed} />
+                <Text style={{ fontSize: 18 }}>🗑️</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
       </ScrollView>
+
+      {/* Direct Edit Day Modal */}
+      <Modal
+        visible={isEditModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleText}>günün anılarını düzenle</Text>
+              <TouchableOpacity
+                onPress={() => setIsEditModalOpen(false)}
+                style={styles.closeButton}
+              >
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.ink }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginBottom: 4 }}>
+              GÜNÜN NOTU
+            </Text>
+            <TextInput
+              style={styles.modalTextInput}
+              multiline={true}
+              placeholder="Bugün neler yaşadın? Notunu yaz..."
+              placeholderTextColor={Colors.textMuted}
+              value={noteInputText}
+              onChangeText={setNoteInputText}
+            />
+
+            <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginTop: 12, marginBottom: 6 }}>
+              HIS HALE / MOOD
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+              {['huzurlu', 'mutlu', 'coşkulu', 'sakin', 'taze', 'yorgun', 'özlemli', 'heyecanlı'].map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  activeOpacity={0.8}
+                  onPress={() => setSelectedMood(m)}
+                  style={{
+                    backgroundColor: selectedMood === m ? Colors.olive : Colors.paper,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: BorderRadius.md,
+                    borderWidth: 1,
+                    borderColor: Colors.border,
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: Fonts.sansBold,
+                    fontSize: 12,
+                    color: selectedMood === m ? '#F4ECE2' : Colors.ink
+                  }}>
+                    {m}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={styles.modalDeleteButton}
+                onPress={handleDelete}
+              >
+                <Text style={styles.modalDeleteText}>Anıyı Sil</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalSaveButton}
+                onPress={handleSaveDayEdits}
+              >
+                <Text style={styles.modalSaveText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -542,5 +639,74 @@ const styles = StyleSheet.create({
     color: Colors.lavender,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#F7F2EA',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalTitleText: {
+    fontSize: 16,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.ink,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalTextInput: {
+    backgroundColor: '#FFFDF9',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: Colors.ink,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: Spacing.md,
+  },
+  modalDeleteButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(201, 74, 74, 0.1)',
+  },
+  modalDeleteText: {
+    color: Colors.dangerLab,
+    fontFamily: Fonts.sansBold,
+    fontSize: 13,
+  },
+  modalSaveButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.burgundy,
+  },
+  modalSaveText: {
+    color: '#F4ECE2',
+    fontFamily: Fonts.sansBold,
+    fontSize: 13,
   },
 });

@@ -24,7 +24,7 @@ export const FlippablePhotoPrint: React.FC<FlippablePhotoPrintProps> = ({
 }) => {
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(width - Spacing.lg * 2, 340);
-  const cardHeight = Math.round(cardWidth * 1.25);
+  const cardHeight = Math.round(cardWidth * 1.5);
 
   const [isFlipped, setIsFlipped] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
