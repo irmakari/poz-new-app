@@ -90,10 +90,10 @@ export const Fonts = {
   sansMedium: 'Kanit_500Medium',
   sansSemiBold: 'Kanit_600SemiBold',
   sansBold: 'Kanit_700Bold',
-  sansExtraBold: 'Kanit_800ExtraBold',
-  sansBlack: 'Kanit_900Black',
-  serif: 'Kanit_700Bold',
-  rounded: 'Kanit_700Bold',
+  sansExtraBold: 'Kanit_700Bold',
+  sansBlack: 'Kanit_700Bold',
+  serif: 'Kanit_600SemiBold',
+  rounded: 'Kanit_600SemiBold',
   mono: Platform.select({ ios: 'Courier New', default: 'monospace', web: 'monospace' }),
 };
 

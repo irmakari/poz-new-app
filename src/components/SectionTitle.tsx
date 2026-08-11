@@ -11,6 +11,7 @@ interface SectionTitleProps {
   actionLabel?: string;
   onPressAction?: () => void;
   style?: ViewStyle;
+  isStampedTitle?: boolean;
 }
 
 export const SectionTitle: React.FC<SectionTitleProps> = ({
@@ -21,6 +22,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   actionLabel,
   onPressAction,
   style,
+  isStampedTitle = true,
 }) => {
   const defaultCategory = categoryLabel || 'ARCHIVE LOG';
 
@@ -39,9 +41,18 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
           )}
         </View>
 
-        {/* Main Nunito Sans ExtraBold Title */}
+        {/* Main Title Row with Framed Stamp UI */}
         <View style={styles.titleRow}>
-          <Text style={styles.titleText}>{title}</Text>
+          {isStampedTitle ? (
+            <View style={styles.stampedTitleBadge}>
+              <View style={styles.stampedTitleInnerDashed}>
+                <Text style={styles.stampedTitleText}>{title}</Text>
+              </View>
+              <View style={styles.inkDotAccent} />
+            </View>
+          ) : (
+            <Text style={styles.titleText}>{title}</Text>
+          )}
 
           {stamp && (
             <PaperStamp
@@ -105,10 +116,43 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   titleText: {
-    fontSize: 22,
-    fontFamily: Fonts.sansBlack,
+    fontSize: 21,
+    fontFamily: Fonts.sansSemiBold,
     color: Colors.text,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
+  },
+  stampedTitleBadge: {
+    borderWidth: 1.5,
+    borderColor: Colors.text,
+    borderRadius: 7,
+    padding: 2,
+    alignSelf: 'flex-start',
+    backgroundColor: 'transparent',
+    transform: [{ rotate: '-0.5deg' }],
+  },
+  stampedTitleInnerDashed: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(28, 26, 36, 0.65)',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  stampedTitleText: {
+    fontSize: 19,
+    fontFamily: Fonts.sansSemiBold,
+    color: Colors.text,
+    letterSpacing: -0.2,
+  },
+  inkDotAccent: {
+    position: 'absolute',
+    top: 3,
+    right: 4,
+    width: 2.5,
+    height: 2.5,
+    borderRadius: 1.25,
+    backgroundColor: Colors.text,
+    opacity: 0.4,
   },
   hairlineDivider: {
     height: 1,
