@@ -16,30 +16,30 @@ export const PhotoMetadataTickets: React.FC<PhotoMetadataTicketsProps> = ({ phot
 
       <View style={styles.ticketsGrid}>
         {/* 1. Date & Time */}
-        <View style={[styles.ticketBadge, { backgroundColor: Colors.yellow, transform: [{ rotate: '-1.5deg' }] }]}>
-          <PozIcon name="calendar" size={12} color={Colors.yellowDark} />
-          <Text style={styles.ticketText}>{photo.date} · {photo.time}</Text>
+        <View style={[styles.ticketBadge, { backgroundColor: '#FFF1B0', transform: [{ rotate: '-1.5deg' }] }]}>
+          <PozIcon name="calendar" size={12} color="#5C4A00" />
+          <Text style={[styles.ticketText, { color: '#181520' }]}>{photo.date} · {photo.time}</Text>
         </View>
 
         {/* 2. Frame Code */}
         <View style={[styles.ticketBadge, { backgroundColor: Colors.lavender, transform: [{ rotate: '1.8deg' }] }]}>
-          <PozIcon name="photo" size={12} color={Colors.lavenderDark} />
-          <Text style={styles.ticketText}>KARE #{photo.frameNumber} ({photo.frameCode})</Text>
+          <PozIcon name="photo" size={12} color="#FFFDF9" />
+          <Text style={[styles.ticketText, { color: '#FFFDF9' }]}>KARE #{photo.frameNumber} ({photo.frameCode})</Text>
         </View>
 
         {/* 3. Location */}
         {photo.location ? (
           <View style={[styles.ticketBadge, { backgroundColor: Colors.blue, transform: [{ rotate: '-1deg' }] }]}>
-            <PozIcon name="photo" size={12} color={Colors.blueDark} />
-            <Text style={styles.ticketText}>📍 {photo.location}</Text>
+            <PozIcon name="photo" size={12} color="#FFFDF9" />
+            <Text style={[styles.ticketText, { color: '#FFFDF9' }]}>📍 {photo.location}</Text>
           </View>
         ) : null}
 
         {/* 4. Mood */}
         {photo.mood ? (
           <View style={[styles.ticketBadge, { backgroundColor: Colors.green, transform: [{ rotate: '1.2deg' }] }]}>
-            <PozIcon name="sparkle" size={12} color={Colors.greenDark} />
-            <Text style={styles.ticketText}>HİS: {photo.mood}</Text>
+            <PozIcon name="sparkle" size={12} color="#FFFDF9" />
+            <Text style={[styles.ticketText, { color: '#FFFDF9' }]}>HİS: {photo.mood}</Text>
           </View>
         ) : null}
       </View>

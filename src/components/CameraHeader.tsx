@@ -11,7 +11,7 @@ interface CameraHeaderProps {
 }
 
 export const CameraHeader: React.FC<CameraHeaderProps> = ({
-  filmName = 'summer glow',
+  filmName = 'film rulosu',
   filmType = '35mm · iso 400',
   remainingFrames = 24,
 }) => {

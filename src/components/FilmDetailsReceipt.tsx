@@ -25,20 +25,20 @@ export const FilmDetailsReceipt: React.FC<FilmDetailsReceiptProps> = ({ film }) 
         style={styles.card}
       >
         <View style={styles.cardHeaderRow}>
-          <Text style={styles.receiptTitle}>FOTOĞRAF LABORATUVARI FİŞİ</Text>
-          <PaperStamp label="CONFIRMED" color={Colors.textSecondary} rotation="-2deg" />
+          <Text style={styles.receiptTitle}>FOTOĞRAF LABORATUVARI SİPARİŞİ</Text>
+          <PaperStamp label="READY" color={Colors.textSecondary} rotation="-2deg" />
         </View>
 
         {/* 2-Column Info Specs Grid */}
         <View style={styles.specsGrid}>
           <View style={styles.specRow}>
             <Text style={styles.specLabel}>FİLM ADI</Text>
-            <Text style={styles.specValue}>{film.title}</Text>
+            <Text style={styles.specValue}>{film.name || film.title}</Text>
           </View>
 
           <View style={styles.specRow}>
-            <Text style={styles.specLabel}>FİLM TİPİ</Text>
-            <Text style={styles.specValue}>{film.type}</Text>
+            <Text style={styles.specLabel}>FİLM TÜRÜ</Text>
+            <Text style={styles.specValue}>{film.filmTypeName || film.type || '35mm'}</Text>
           </View>
 
           <View style={styles.specRow}>
@@ -47,29 +47,26 @@ export const FilmDetailsReceipt: React.FC<FilmDetailsReceiptProps> = ({ film }) 
           </View>
 
           <View style={styles.specRow}>
-            <Text style={styles.specLabel}>KARE SAYISI</Text>
+            <Text style={styles.specLabel}>POZ KARELERİ</Text>
             <Text style={styles.specValue}>{film.totalFrames} KARE</Text>
           </View>
 
           <View style={styles.specRow}>
-            <Text style={styles.specLabel}>BAŞLANGIÇ</Text>
-            <Text style={styles.specValue}>{film.startDate || '1 temmuz 2026'}</Text>
+            <Text style={styles.specLabel}>KULLANIM AMACI</Text>
+            <Text style={styles.specValue}>{film.purpose || 'aylık film'}</Text>
           </View>
 
           <View style={styles.specRow}>
-            <Text style={styles.specLabel}>BİTİŞ</Text>
-            <Text style={styles.specValue}>{film.endDate || '27 temmuz 2026'}</Text>
+            <Text style={styles.specLabel}>BAŞLANGIÇ</Text>
+            <Text style={styles.specValue}>{film.startDate || '27 temmuz 2026'}</Text>
           </View>
 
-          <View style={styles.specRowFull}>
-            <Text style={styles.specLabel}>BANYO TARİHİ</Text>
-            <Text style={styles.specValue}>{film.developedDate || '28 temmuz 2026'}</Text>
-          </View>
-
-          <View style={styles.specRowFull}>
-            <Text style={styles.specLabel}>ÇEKİM KONUMLARI</Text>
-            <Text style={styles.specValue}>{film.receiptLocations || 'bostancı, kadıköy, moda'}</Text>
-          </View>
+          {film.developedDate ? (
+            <View style={styles.specRowFull}>
+              <Text style={styles.specLabel}>BANYO TARİHİ</Text>
+              <Text style={styles.specValue}>{film.developedDate}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.specRowFull}>
             <Text style={styles.specLabel}>SERİ NUMARASI</Text>
@@ -82,7 +79,7 @@ export const FilmDetailsReceipt: React.FC<FilmDetailsReceiptProps> = ({ film }) 
           <View style={styles.barcodeLines} pointerEvents="none">
             {Array.from({ length: 28 }).map((_, i) => (
               <View
-                key={i}
+                key={`lab-bc-${i}`}
                 style={[
                   styles.barcodeBar,
                   { width: i % 4 === 0 ? 3 : i % 2 === 0 ? 1 : 2 },

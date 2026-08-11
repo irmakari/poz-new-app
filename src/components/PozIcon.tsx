@@ -19,7 +19,9 @@ export type PozIconName =
   | 'lock'
   | 'mail'
   | 'apple'
-  | 'google';
+  | 'google'
+  | 'eye'
+  | 'eye-off';
 
 interface PozIconProps {
   name: PozIconName;
@@ -46,6 +48,8 @@ const SYMBOL_MAP: Record<PozIconName, string> = {
   mail: 'envelope.fill',
   apple: 'apple.logo',
   google: 'g.circle.fill',
+  eye: 'eye.fill',
+  'eye-off': 'eye.slash.fill',
 };
 
 const FALLBACK_MAP: Record<PozIconName, string> = {
@@ -59,13 +63,15 @@ const FALLBACK_MAP: Record<PozIconName, string> = {
   music: '🎵',
   photo: '🖼',
   star: '★',
-  sparkle: '✦',
+  sparkle: '✨',
   sun: '☀️',
-  'arrow-right': '→',
+  'arrow-right': '➔',
   lock: '🔒',
   mail: '✉',
   apple: '',
   google: 'G',
+  eye: '👁',
+  'eye-off': '🙈',
 };
 
 export const PozIcon: React.FC<PozIconProps> = ({

@@ -13,11 +13,11 @@ interface FilmInfoLabelProps {
 }
 
 export const FilmInfoLabel: React.FC<FilmInfoLabelProps> = ({
-  filmName = 'summer glow',
+  filmName = 'film rulosu',
   frameCount = 12,
   totalFrames = 36,
   dateLabel = 'temmuz 2026',
-  serial = 'SG-0726',
+  serial = 'POZ-35MM',
 }) => {
   return (
     <View style={styles.container}>

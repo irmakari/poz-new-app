@@ -8,8 +8,10 @@ import {
   Alert,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { DayHeader } from '@/components/DayHeader';
@@ -26,10 +28,11 @@ import { useApp } from '@/context/AppContext';
 import { DAY_ENTRIES } from '@/utils/dayData';
 
 export default function DayDetailScreen() {
+  const router = useRouter();
   const { date } = useLocalSearchParams<{ date: string }>();
   const dateStr = date || '2026-07-27';
 
-  const { dailyNotes, photos, deleteDailyNote } = useApp();
+  const { dailyNotes, photos, deleteDailyNote, selectCaptureMode } = useApp();
 
   const dateMatchStr = dateStr.includes('-') ? dateStr : '2026-07-27';
   const dayDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && (p.date.includes(dateStr) || p.date.includes('27 temmuz')));
@@ -222,15 +225,41 @@ export default function DayDetailScreen() {
               ) : (
                 <View style={styles.emptySectionBox}>
                   <Text style={styles.emptySectionText}>bugün hemen açılan bir fotoğraf eklemedin.</Text>
+                  
+                  <View style={styles.emptyActionRow}>
+                    <TouchableOpacity
+                      activeOpacity={0.82}
+                      onPress={() => {
+                        selectCaptureMode('daily');
+                        router.push('/(tabs)/camera');
+                      }}
+                      style={styles.dailyPhotoButton}
+                    >
+                      <PozIcon name="photo" size={13} color="#181520" />
+                      <Text style={styles.dailyPhotoButtonText}>günlük çek</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.82}
+                      onPress={() => {
+                        selectCaptureMode('film');
+                        router.push('/(tabs)/camera');
+                      }}
+                      style={styles.filmPhotoButton}
+                    >
+                      <PozIcon name="films" size={13} color="#FFFDF9" />
+                      <Text style={styles.filmPhotoButtonText}>film çek</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </View>
 
-            {/* 2. BUGÜNÜN FİLM KARELERİ (FILM FRAMES) SECTION */}
-            <View style={styles.sectionContainer}>
-              <SectionTitle title="bugünün film kareleri" stamp={`${dayFilmPhotos.length} KARE`} />
+            {/* 2. BUGÜNÜN FİLM KARELERİ (FILM FRAMES) SECTION - Hide completely if no film photos */}
+            {dayFilmPhotos.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <SectionTitle title="bugünün film kareleri" stamp={`${dayFilmPhotos.length} KARE`} />
 
-              {dayFilmPhotos.length > 0 ? (
                 <View style={styles.filmStripCard}>
                   {/* Sprocket Perforations Top */}
                   <View style={styles.sprocketRow}>
@@ -243,7 +272,7 @@ export default function DayDetailScreen() {
                     {dayFilmPhotos.map((photoItem) => (
                       <View key={photoItem.id} style={styles.filmNegativeCell}>
                         <View style={styles.negativeHeader}>
-                          <Text style={styles.filmNameTag}>{photoItem.filmTitle || 'SUMMER GLOW'}</Text>
+                          <Text style={styles.filmNameTag}>{photoItem.filmTitle || (photoItem as any).filmName || 'FİLM KARESI'}</Text>
                           <Text style={styles.frameCodeTag}>{photoItem.code || `${photoItem.frameNumber || 13}A`}</Text>
                         </View>
 
@@ -269,12 +298,8 @@ export default function DayDetailScreen() {
                     ))}
                   </View>
                 </View>
-              ) : (
-                <View style={styles.emptySectionBox}>
-                  <Text style={styles.emptySectionText}>bugün filme kare eklemedin.</Text>
-                </View>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Journal Note Section */}
             {entry?.note ? (
@@ -344,83 +369,100 @@ export default function DayDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Direct Edit Day Modal */}
+      {/* Direct Edit Day Bottom Sheet */}
       <Modal
         visible={isEditModalOpen}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setIsEditModalOpen(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitleText}>günün anılarını düzenle</Text>
-              <TouchableOpacity
-                onPress={() => setIsEditModalOpen(false)}
-                style={styles.closeButton}
-              >
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.ink }}>✕</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity
+          style={styles.sheetOverlay}
+          activeOpacity={1}
+          onPress={() => setIsEditModalOpen(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.bottomSheetCard}
+            >
+              <View style={styles.sheetHandle} />
 
-            <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginBottom: 4 }}>
-              GÜNÜN NOTU
-            </Text>
-            <TextInput
-              style={styles.modalTextInput}
-              multiline={true}
-              placeholder="Bugün neler yaşadın? Notunu yaz..."
-              placeholderTextColor={Colors.textMuted}
-              value={noteInputText}
-              onChangeText={setNoteInputText}
-            />
-
-            <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginTop: 12, marginBottom: 6 }}>
-              HIS HALE / MOOD
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-              {['huzurlu', 'mutlu', 'coşkulu', 'sakin', 'taze', 'yorgun', 'özlemli', 'heyecanlı'].map((m) => (
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitleText}>günün anılarını düzenle</Text>
                 <TouchableOpacity
-                  key={m}
-                  activeOpacity={0.8}
-                  onPress={() => setSelectedMood(m)}
-                  style={{
-                    backgroundColor: selectedMood === m ? Colors.olive : Colors.paper,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: BorderRadius.md,
-                    borderWidth: 1,
-                    borderColor: Colors.border,
-                  }}
+                  onPress={() => setIsEditModalOpen(false)}
+                  style={styles.closeButton}
                 >
-                  <Text style={{
-                    fontFamily: Fonts.sansBold,
-                    fontSize: 12,
-                    color: selectedMood === m ? '#F4ECE2' : Colors.ink
-                  }}>
-                    {m}
-                  </Text>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.ink }}>✕</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+              </View>
 
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.modalDeleteButton}
-                onPress={handleDelete}
-              >
-                <Text style={styles.modalDeleteText}>Anıyı Sil</Text>
-              </TouchableOpacity>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginBottom: 4 }}>
+                  GÜNÜN NOTU
+                </Text>
+                <TextInput
+                  style={styles.modalTextInput}
+                  multiline={true}
+                  placeholder="Bugün neler yaşadın? Notunu yaz..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={noteInputText}
+                  onChangeText={setNoteInputText}
+                />
 
-              <TouchableOpacity
-                style={styles.modalSaveButton}
-                onPress={handleSaveDayEdits}
-              >
-                <Text style={styles.modalSaveText}>Kaydet</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+                <Text style={{ fontSize: 12, fontFamily: Fonts.mono, color: Colors.textMuted, marginTop: 12, marginBottom: 6 }}>
+                  HIS HALE / MOOD
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                  {['huzurlu', 'mutlu', 'coşkulu', 'sakin', 'taze', 'yorgun', 'özlemli', 'heyecanlı'].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      activeOpacity={0.8}
+                      onPress={() => setSelectedMood(m)}
+                      style={{
+                        backgroundColor: selectedMood === m ? Colors.olive : Colors.paper,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: BorderRadius.md,
+                        borderWidth: 1,
+                        borderColor: Colors.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontFamily: Fonts.sansBold,
+                        fontSize: 12,
+                        color: selectedMood === m ? '#F4ECE2' : Colors.ink
+                      }}>
+                        {m}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.modalActionRow}>
+                  <TouchableOpacity
+                    style={styles.modalDeleteButton}
+                    onPress={handleDelete}
+                  >
+                    <Text style={styles.modalDeleteText}>Anıyı Sil</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.modalSaveButton}
+                    onPress={handleSaveDayEdits}
+                  >
+                    <Text style={styles.modalSaveText}>Kaydet</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -540,7 +582,7 @@ const styles = StyleSheet.create({
   },
   emptySectionBox: {
     backgroundColor: '#FFFDF9',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
@@ -549,12 +591,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: Spacing.xs,
+    gap: 12,
   },
   emptySectionText: {
     fontSize: 12,
     fontFamily: Fonts.mono,
     color: Colors.textMuted,
     textAlign: 'center',
+  },
+  emptyActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    width: '100%',
+  },
+  dailyPhotoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1B0',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(230, 168, 0, 0.3)',
+    gap: 6,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  dailyPhotoButtonText: {
+    fontSize: 12,
+    fontFamily: Fonts.sansBold,
+    color: '#181520',
+  },
+  filmPhotoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#231F33',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 6,
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  filmPhotoButtonText: {
+    fontSize: 12,
+    fontFamily: Fonts.sansBold,
+    color: '#FFFDF9',
   },
   filmStripCard: {
     backgroundColor: '#1C1A24',
@@ -640,20 +736,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  modalOverlay: {
+  sheetOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.lg,
+    justifyContent: 'flex-end',
   },
-  modalCard: {
+  bottomSheetCard: {
     width: '100%',
     backgroundColor: '#F7F2EA',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl + 10,
     borderWidth: 1,
     borderColor: Colors.border,
+    maxHeight: '85%',
+  },
+  sheetHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(28, 26, 36, 0.2)',
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',

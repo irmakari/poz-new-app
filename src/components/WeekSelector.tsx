@@ -134,8 +134,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
   },
   selectedText: {
-    color: Colors.lavender,
+    color: '#93C5FD',
     fontFamily: Fonts.mono,
+    fontWeight: '800',
   },
   unselectedText: {
     color: Colors.textSecondary,

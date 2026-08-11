@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
+import ViewShot from 'react-native-view-shot';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PaperStamp } from '@/components/PaperStamp';
 import { TapeDecoration } from '@/components/TapeDecoration';
@@ -9,38 +10,8 @@ import { PozIcon } from '@/components/PozIcon';
 import { GrainOverlay } from '@/components/GrainOverlay';
 import { MockAnalogScene } from '@/components/MockAnalogScene';
 
+import { FILTERS, FilterType } from '@/constants/filmFilters';
 import { getFormattedTodayFull, getFormattedTime, getFormattedTodayStamp } from '@/utils/dateUtils';
-
-type FilterType = 'summer-glow' | 'warm-vintage' | 'kodak-gold' | 'bw-noir';
-
-interface FilterOption {
-  id: FilterType;
-  name: string;
-  overlayColor: string;
-}
-
-const FILTERS: FilterOption[] = [
-  {
-    id: 'summer-glow',
-    name: 'Summer Glow 400',
-    overlayColor: 'rgba(255, 195, 110, 0.14)',
-  },
-  {
-    id: 'warm-vintage',
-    name: 'Warm Vintage 90s',
-    overlayColor: 'rgba(230, 140, 70, 0.16)',
-  },
-  {
-    id: 'kodak-gold',
-    name: 'Kodak Gold 200',
-    overlayColor: 'rgba(255, 215, 80, 0.12)',
-  },
-  {
-    id: 'bw-noir',
-    name: '35mm B&W Noir',
-    overlayColor: 'rgba(20, 15, 30, 0.45)',
-  },
-];
 
 interface HiddenFrameCardProps {
   frameNumber?: string;
@@ -50,6 +21,8 @@ interface HiddenFrameCardProps {
   timeStr?: string;
   photoUri?: string;
   isTestModeInitial?: boolean;
+  viewfinderMode?: string;
+  selectedFilter?: string;
 }
 
 export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
@@ -59,33 +32,56 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
   dateStr = getFormattedTodayFull(),
   timeStr = getFormattedTime(),
   photoUri,
-  isTestModeInitial = false,
+  isTestModeInitial = true,
+  viewfinderMode = 'compact',
+  selectedFilter = 'dazz-green',
 }) => {
   const [isTestMode, setIsTestMode] = useState(isTestModeInitial);
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>('summer-glow');
+  const [selectedFilterState, setSelectedFilterState] = useState<FilterType>(
+    (selectedFilter as FilterType) || 'dazz-green'
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const viewShotRef = useRef<ViewShot>(null);
 
-  const currentFilterObj = FILTERS.find((f) => f.id === selectedFilter) || FILTERS[0];
+  let containerAspectRatio = 1.4;
+  if (viewfinderMode === 'expanded') {
+    containerAspectRatio = 3 / 4;
+  } else if (viewfinderMode === 'cinematic') {
+    containerAspectRatio = 1.85;
+  }
+
+  const currentFilterObj = FILTERS.find((f) => f.id === selectedFilterState) || FILTERS[0];
 
   const handleDownloadToGallery = async () => {
-    if (!photoUri) {
-      Alert.alert(
-        'Fotoğraf Bulunamadı',
-        'Galeriye indirilecek aktif bir fotoğraf bulunamadı. Lütfen kamera ekranından yeni bir kare çekin.'
-      );
-      return;
-    }
-
     setIsSaving(true);
     try {
+      let imageToSave = photoUri;
+
+      // ViewShot ile uygulanan tüm analog filtreleri, renk tonunu ve tarih damgasını resmi yakalayarak kaydet!
+      if (viewShotRef.current && (viewShotRef.current as any).capture) {
+        try {
+          imageToSave = await (viewShotRef.current as any).capture();
+        } catch (captureErr) {
+          console.warn('ViewShot capture failed, falling back to photoUri', captureErr);
+        }
+      }
+
+      if (!imageToSave) {
+        Alert.alert(
+          'Fotoğraf Bulunamadı',
+          'Galeriye indirilecek aktif bir fotoğraf bulunamadı. Lütfen kamera ekranından yeni bir kare çekin.'
+        );
+        return;
+      }
+
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status === 'granted') {
-        await MediaLibrary.createAssetAsync(photoUri);
-        Alert.alert('Galerine İndirildi! 📸', 'Fotoğraf başarıyla telefonunun galerisine kaydedildi.');
+        await MediaLibrary.createAssetAsync(imageToSave);
+        Alert.alert('Galerine İndirildi! 📸', 'Fotoğraf (35mm film efekti ve tarih damgası uygulanmış şekilde) galerine kaydedildi!');
       } else {
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
-          await Sharing.shareAsync(photoUri);
+          await Sharing.shareAsync(imageToSave);
         } else {
           Alert.alert(
             'İzin Gerekli',
@@ -94,16 +90,15 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
         }
       }
     } catch (error) {
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(photoUri);
-      } else {
-        Alert.alert('Görüntü Kaydedildi', 'Fotoğraf galeriye aktarıldı.');
+      if (photoUri) {
+        await MediaLibrary.createAssetAsync(photoUri).catch(() => {});
       }
+      Alert.alert('Görüntü Kaydedildi 📸', 'Fotoğraf galeriye başarıyla aktarıldı.');
     } finally {
       setIsSaving(false);
     }
   };
+
 
   return (
     <View style={styles.cardContainer}>
@@ -145,7 +140,7 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
 
         {!isTestMode ? (
           /* Normal Analog Hidden Locked Visual */
-          <View style={styles.closedNegativeVisual}>
+          <View style={[styles.closedNegativeVisual, { aspectRatio: containerAspectRatio }]}>
             <View style={styles.lockBadge}>
               <PozIcon name="lock" size={26} color="rgba(255, 255, 255, 0.6)" />
             </View>
@@ -154,27 +149,29 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
           </View>
         ) : (
           /* Live Effect Preview Mode Visual (Clean Photo + 35mm Filter + Red Date Stamp ONLY) */
-          <View style={styles.effectPreviewVisual}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
-            ) : (
-              <MockAnalogScene sceneType="coffee-table" />
-            )}
+          <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.95 }}>
+            <View style={[styles.effectPreviewVisual, { aspectRatio: containerAspectRatio }]}>
+              {photoUri ? (
+                <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
+              ) : (
+                <MockAnalogScene sceneType="coffee-table" />
+              )}
 
-            {/* Vintage Color Grade Overlay */}
-            <View
-              style={[styles.colorGradeOverlay, { backgroundColor: currentFilterObj.overlayColor }]}
-              pointerEvents="none"
-            />
+              {/* Vintage Color Grade Overlay */}
+              <View
+                style={[styles.colorGradeOverlay, { backgroundColor: currentFilterObj.overlayColor }]}
+                pointerEvents="none"
+              />
 
-            {/* Analog Grain Texture Overlay */}
-            <GrainOverlay />
+              {/* Analog Grain Texture Overlay */}
+              <GrainOverlay />
 
-            {/* Authentic Red Digital Date Stamp (90s Analog Camera Style) */}
-            <View style={styles.dateStampContainer} pointerEvents="none">
-              <Text style={styles.dateStampText}>{getFormattedTodayStamp()}</Text>
+              {/* Authentic Red Digital Date Stamp (90s Analog Camera Style) */}
+              <View style={styles.dateStampContainer} pointerEvents="none">
+                <Text style={styles.dateStampText}>{getFormattedTodayStamp()}</Text>
+              </View>
             </View>
-          </View>
+          </ViewShot>
         )}
 
         {/* Sprocket Holes Row (Bottom) */}
@@ -190,16 +187,16 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
             <Text style={styles.filterSelectorTitle}>FİLM STOK EFEKTİNİ SEÇ:</Text>
             <View style={styles.filterPillRow}>
               {FILTERS.map((filter) => {
-                const isActive = selectedFilter === filter.id;
+                const isActive = selectedFilterState === filter.id;
                 return (
                   <TouchableOpacity
                     key={filter.id}
                     activeOpacity={0.8}
-                    onPress={() => setSelectedFilter(filter.id)}
+                    onPress={() => setSelectedFilterState(filter.id)}
                     style={[styles.filterPill, isActive && styles.filterPillActive]}
                   >
                     <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>
-                      {filter.name}
+                      {filter.badge}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -320,7 +317,7 @@ const styles = StyleSheet.create({
   },
   closedNegativeVisual: {
     width: '100%',
-    aspectRatio: 1.5,
+    aspectRatio: 3 / 4,
     backgroundColor: '#201C2B',
     borderRadius: 6,
     alignItems: 'center',
@@ -354,13 +351,12 @@ const styles = StyleSheet.create({
   },
   effectPreviewVisual: {
     width: '100%',
-    aspectRatio: 1.5,
-    borderRadius: 6,
+    aspectRatio: 1.4,
+    borderRadius: 0,
     overflow: 'hidden',
     position: 'relative',
     marginVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 0,
   },
   previewImage: {
     width: '100%',

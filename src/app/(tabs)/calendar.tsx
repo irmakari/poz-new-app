@@ -14,11 +14,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CalendarScreen() {
   const { dailyNotes, photos } = useApp();
-  const todayKeyStr = getTodayKey();
+  const todayKeyStr = getTodayKey(); // e.g. "2026-08-10"
 
-  // 0 = Haziran 2026, 1 = Temmuz 2026, 2 = Ağustos 2026
-  const [monthIndex, setMonthIndex] = useState<number>(1); // Default July (1)
-  const [selectedDate, setSelectedDate] = useState<string>(todayKeyStr); // Default today
+  // Dinamik olarak bugünün ayını hesapla (0 = Haziran 2026, 1 = Temmuz 2026, 2 = Ağustos 2026)
+  const getInitialMonthIndex = () => {
+    const d = new Date();
+    const m = d.getMonth() + 1; // 1-12 (8 = Ağustos)
+    if (m >= 6 && m <= 8) return m - 6;
+    return 2; // Varsayılan Ağustos 2026
+  };
+
+  const [monthIndex, setMonthIndex] = useState<number>(getInitialMonthIndex());
+  const [selectedDate, setSelectedDate] = useState<string>(todayKeyStr);
 
   const { monthTitle, days } = generateCalendarGrid(monthIndex);
 
@@ -26,9 +33,13 @@ export default function CalendarScreen() {
     if (monthIndex > 0) {
       const nextIdx = monthIndex - 1;
       setMonthIndex(nextIdx);
-      // Default select 15th of that month
       const mNum = nextIdx + 6;
-      setSelectedDate(`2026-${String(mNum).padStart(2, '0')}-15`);
+      const targetMonthStr = `2026-${String(mNum).padStart(2, '0')}`;
+      if (todayKeyStr.startsWith(targetMonthStr)) {
+        setSelectedDate(todayKeyStr);
+      } else {
+        setSelectedDate(`${targetMonthStr}-01`);
+      }
     }
   };
 
@@ -36,9 +47,13 @@ export default function CalendarScreen() {
     if (monthIndex < 2) {
       const nextIdx = monthIndex + 1;
       setMonthIndex(nextIdx);
-      // Default select 15th of that month
       const mNum = nextIdx + 6;
-      setSelectedDate(`2026-${String(mNum).padStart(2, '0')}-15`);
+      const targetMonthStr = `2026-${String(mNum).padStart(2, '0')}`;
+      if (todayKeyStr.startsWith(targetMonthStr)) {
+        setSelectedDate(todayKeyStr);
+      } else {
+        setSelectedDate(`${targetMonthStr}-01`);
+      }
     }
   };
 

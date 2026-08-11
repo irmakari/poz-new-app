@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PhotoDetailHeader } from '@/components/PhotoDetailHeader';
 import { PhotoDateHeader } from '@/components/PhotoDateHeader';
 import { FlippablePhotoPrint } from '@/components/FlippablePhotoPrint';
-import { PhotoMetadataTickets } from '@/components/PhotoMetadataTickets';
-import { PhotoSongLabel } from '@/components/PhotoSongLabel';
-import { PhotoFilmLink } from '@/components/PhotoFilmLink';
 import { PhotoActionArea } from '@/components/PhotoActionArea';
 import { FullNoteModal } from '@/components/FullNoteModal';
 import { LockedPhotoCard } from '@/components/LockedPhotoCard';
@@ -22,10 +19,33 @@ export default function PhotoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [isFullNoteModalVisible, setIsFullNoteModalVisible] = useState(false);
+  const [isEditSheetVisible, setIsEditSheetVisible] = useState(false);
 
-  const { photos, deletePhotoFrame } = useApp();
+  const { photos, deletePhotoFrame, updatePhotoFrame } = useApp();
 
   const photo = photos.find((p) => p.id === id) || photos[0];
+
+  const [editNote, setEditNote] = useState(photo?.note || '');
+  const [editLocation, setEditLocation] = useState(photo?.location || '');
+  const [editMood, setEditMood] = useState(photo?.mood || 'sakin');
+
+  const handleOpenEdit = () => {
+    setEditNote(photo?.note || '');
+    setEditLocation(photo?.location || '');
+    setEditMood(photo?.mood || 'sakin');
+    setIsEditSheetVisible(true);
+  };
+
+  const handleSaveEdits = async () => {
+    if (photo) {
+      await updatePhotoFrame(photo.id, {
+        note: editNote,
+        location: editLocation,
+        mood: editMood,
+      });
+    }
+    setIsEditSheetVisible(false);
+  };
 
   const handleDeletePhoto = async () => {
     if (photo) {
@@ -91,48 +111,8 @@ export default function PhotoDetailScreen() {
           onOpenFullNote={() => setIsFullNoteModalVisible(true)}
         />
 
-        {/* Quick Info Tags */}
-        <PhotoMetadataTickets photo={photo} />
-
-        {/* Cassette Tape Song Label */}
-        {photo.song && <PhotoSongLabel song={photo.song} />}
-
-        {/* Film Details Link Card or Day Link */}
-        {photo.captureMode === 'daily' ? (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => router.push({ pathname: '/day/[date]', params: { date: '2026-07-27' } })}
-            style={{
-              backgroundColor: '#FFFDF9',
-              padding: 14,
-              borderRadius: BorderRadius.md,
-              borderWidth: 1,
-              borderColor: Colors.border,
-              marginVertical: Spacing.sm,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <PozIcon name="calendar" size={18} color={Colors.yellowDark} />
-              <View>
-                <Text style={{ fontSize: 13, fontFamily: Fonts.sansExtraBold, color: Colors.text }}>
-                  GÜNLÜK BASKI • ANILARA GİT
-                </Text>
-                <Text style={{ fontSize: 11, fontFamily: Fonts.mono, color: Colors.textSecondary }}>
-                  {photo.date} • {photo.time || '14:20'}
-                </Text>
-              </View>
-            </View>
-            <PozIcon name="arrow-right" size={16} color={Colors.text} />
-          </TouchableOpacity>
-        ) : (
-          <PhotoFilmLink filmTitle={photo.filmTitle || 'summer glow'} filmId={photo.filmId || 'summer-glow-july-2026'} />
-        )}
-
         {/* Edit / Share / Delete Action Area */}
-        <PhotoActionArea onDelete={handleDeletePhoto} />
+        <PhotoActionArea onEdit={handleOpenEdit} onDelete={handleDeletePhoto} />
 
         {/* Full Journal Note Reader Modal */}
         <FullNoteModal
@@ -142,6 +122,98 @@ export default function PhotoDetailScreen() {
           dateStr={photo.date}
         />
       </ScrollView>
+
+      {/* Edit Frame Bottom Sheet Modal */}
+      <Modal
+        visible={isEditSheetVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditSheetVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.sheetOverlay}
+          activeOpacity={1}
+          onPress={() => setIsEditSheetVisible(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.bottomSheetCard}
+            >
+              <View style={styles.sheetHandle} />
+
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitleText}>kareyi düzenle</Text>
+                <TouchableOpacity onPress={() => setIsEditSheetVisible(false)} style={{ padding: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.ink }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }} keyboardShouldPersistTaps="handled">
+                <Text style={styles.inputLabelText}>KARE NOTU</Text>
+                <TextInput
+                  style={styles.sheetTextInput}
+                  multiline={true}
+                  placeholder="Bu kareye bir not ekle..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={editNote}
+                  onChangeText={setEditNote}
+                />
+
+                <Text style={[styles.inputLabelText, { marginTop: 12 }]}>KONUM</Text>
+                <TextInput
+                  style={styles.sheetSingleInput}
+                  placeholder="Örn: Kadıköy, Ev, Moda..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={editLocation}
+                  onChangeText={setEditLocation}
+                />
+
+                <Text style={[styles.inputLabelText, { marginTop: 12, marginBottom: 6 }]}>HİS HALE / MOOD</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                  {['huzurlu', 'mutlu', 'sakin', 'taze', 'yorgun', 'özlemli', 'coşkulu'].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      activeOpacity={0.8}
+                      onPress={() => setEditMood(m)}
+                      style={{
+                        backgroundColor: editMood === m ? Colors.olive : Colors.paper,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: BorderRadius.md,
+                        borderWidth: 1,
+                        borderColor: Colors.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontFamily: Fonts.sansBold,
+                        fontSize: 12,
+                        color: editMood === m ? '#F4ECE2' : Colors.ink
+                      }}>
+                        {m}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+
+              <View style={styles.sheetActionRow}>
+                <TouchableOpacity style={styles.sheetCancelBtn} onPress={() => setIsEditSheetVisible(false)}>
+                  <Text style={styles.sheetCancelText}>Vazgeç</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.sheetSaveBtn} onPress={handleSaveEdits}>
+                  <Text style={styles.sheetSaveText}>Kaydet</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -186,5 +258,97 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.sansBold,
     color: '#FFFDF9',
+  },
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  bottomSheetCard: {
+    backgroundColor: '#F7F2EA',
+    borderTopLeftRadius: BorderRadius.xl || 20,
+    borderTopRightRadius: BorderRadius.xl || 20,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(28, 26, 36, 0.2)',
+    alignSelf: 'center',
+    marginBottom: Spacing.sm,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  sheetTitleText: {
+    fontSize: 18,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.ink,
+  },
+  inputLabelText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: Colors.textMuted,
+    marginBottom: 4,
+  },
+  sheetTextInput: {
+    backgroundColor: '#FFFDF9',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    minHeight: 75,
+    textAlignVertical: 'top',
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: Colors.ink,
+  },
+  sheetSingleInput: {
+    backgroundColor: '#FFFDF9',
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: Colors.ink,
+  },
+  sheetActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: Spacing.md,
+  },
+  sheetCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(28, 26, 36, 0.06)',
+  },
+  sheetCancelText: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.sansBold,
+    fontSize: 13,
+  },
+  sheetSaveBtn: {
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.burgundy,
+  },
+  sheetSaveText: {
+    color: '#F4ECE2',
+    fontFamily: Fonts.sansBold,
+    fontSize: 13,
   },
 });

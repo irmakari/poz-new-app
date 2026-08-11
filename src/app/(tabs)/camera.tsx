@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FILTERS, FilterType } from '@/constants/filmFilters';
 import { useApp } from '@/context/AppContext';
 
 export default function CameraScreen() {
@@ -41,6 +42,10 @@ export default function CameraScreen() {
   // Local Camera States
   const [flashState, setFlashState] = useState<FlashState>('auto');
   const [facing, setFacing] = useState<CameraFacing>('back');
+  const [viewfinderMode, setViewfinderMode] = useState<ViewfinderMode>('compact');
+  const [isMirrored, setIsMirrored] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('dazz-green');
+  const [isDreamyGlow, setIsDreamyGlow] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
@@ -62,14 +67,44 @@ export default function CameraScreen() {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
   };
 
+  // 3-Way Viewfinder Size Toggle Handler (Compact 35mm -> Cinematic Ultra-wide -> Expanded Dazz 3:4)
+  const handleToggleViewfinderMode = () => {
+    setViewfinderMode((prev) => {
+      if (prev === 'compact') return 'cinematic';
+      if (prev === 'cinematic') return 'expanded';
+      return 'compact';
+    });
+  };
+
+  const getViewfinderText = () => {
+    if (viewfinderMode === 'compact') return '🎞️ 35MM YAYVAN';
+    if (viewfinderMode === 'cinematic') return '🎬 ULTRA GENİŞ (SİNEMATİK)';
+    return '🔍 DAZZ PORTRE (3:4)';
+  };
+
+  // Mirror Effect Toggle Handler
+  const handleToggleMirror = () => {
+    setIsMirrored((prev) => !prev);
+  };
+
+  // Dreamy Glow Bloom Toggle Handler
+  const handleToggleDreamyGlow = () => {
+    setIsDreamyGlow((prev) => !prev);
+  };
+
+
   // Shutter Press Handler (Dual Mode)
   const handleShutterPress = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
 
     try {
-      // 1. Take picture using real camera view
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.8 });
+      // 1. Take picture using real camera view (görüntünün çektikten sonra dönmemesi için tam uyum)
+      const shouldMirror = facing === 'front' ? !isMirrored : isMirrored;
+      const photo = await cameraRef.current?.takePictureAsync({
+        quality: 0.85,
+        mirror: shouldMirror,
+      });
       if (!photo?.uri) {
         throw new Error('Fotoğraf çekilemedi');
       }
@@ -116,6 +151,9 @@ export default function CameraScreen() {
               photoUri: photo.uri,
               capturedAt: new Date().toISOString(),
               mode: 'daily',
+              viewfinderMode,
+              selectedFilter,
+              isDreamyGlow: isDreamyGlow ? '1' : '0',
             },
           });
         } else {
@@ -126,6 +164,9 @@ export default function CameraScreen() {
               frame: String(capturedFrameNum),
               filmId: activeFilm ? activeFilm.id : 'summer-glow-july-2026',
               mode: 'film',
+              viewfinderMode,
+              selectedFilter,
+              isDreamyGlow: isDreamyGlow ? '1' : '0',
             },
           });
         }
@@ -211,13 +252,102 @@ export default function CameraScreen() {
 
           {/* Header Film & Frame Counter Bar */}
           {currentCaptureMode === 'film' ? (
-            <CameraHeader remainingFrames={remainingFrames} />
+            <CameraHeader
+              filmName={activeFilm ? (activeFilm.name || activeFilm.title) : 'film rulosu'}
+              filmType={activeFilm ? `${activeFilm.filmTypeName || '35MM'} · ISO ${activeFilm.iso || 400}` : '35MM · ISO 400'}
+              remainingFrames={remainingFrames}
+            />
           ) : (
             <View style={styles.dailyHeaderBar}>
               <PozIcon name="photo" size={14} color={Colors.yellow} />
               <Text style={styles.dailyHeaderText}>bugünün fotoğrafı • çek, hemen gör</Text>
             </View>
           )}
+
+          {/* Dazz Cam Live Film Stock Filter Selector */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
+            <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 4 }}>
+              {FILTERS.map((f) => {
+                const isActive = selectedFilter === f.id;
+                return (
+                  <TouchableOpacity
+                    key={f.id}
+                    onPress={() => setSelectedFilter(f.id)}
+                    style={[
+                      styles.filterSelectPill,
+                      isActive && styles.filterSelectPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.filterSelectText,
+                        isActive && styles.filterSelectTextActive,
+                      ]}
+                    >
+                      {f.badge}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* Dazz Cam Style Viewfinder Mode, Mirror & Dreamy Glow Toolbar */}
+          <View style={styles.viewfinderToolBar}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleToggleViewfinderMode}
+              style={[
+                styles.viewfinderToolPill,
+                viewfinderMode === 'expanded' && styles.viewfinderToolPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.viewfinderToolText,
+                  viewfinderMode !== 'compact' && styles.viewfinderToolTextActive,
+                ]}
+              >
+                {getViewfinderText()}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleToggleMirror}
+              style={[
+                styles.viewfinderToolPill,
+                isMirrored && styles.viewfinderToolPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.viewfinderToolText,
+                  isMirrored && styles.viewfinderToolTextActive,
+                ]}
+              >
+                {isMirrored ? '🪞 AYNA ✓' : '🪞 AYNA'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleToggleDreamyGlow}
+              style={[
+                styles.viewfinderToolPill,
+                isDreamyGlow && styles.viewfinderToolPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.viewfinderToolText,
+                  isDreamyGlow && styles.viewfinderToolTextActive,
+                ]}
+              >
+                {isDreamyGlow ? '✨ RÜYA BLOOM ✓' : '✨ RÜYA BLOOM'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Viewfinder Window with Real CameraView when focused */}
           <MockViewfinder
@@ -226,12 +356,24 @@ export default function CameraScreen() {
             flashState={flashState}
             facing={facing}
             flashAnimOpacity={flashAnimOpacity}
+            viewfinderMode={viewfinderMode}
+            isMirrored={isMirrored}
+            selectedFilter={selectedFilter}
+            isDreamyGlow={isDreamyGlow}
           />
+
 
           {/* Mode Info Label Under Viewfinder */}
           {currentCaptureMode === 'film' ? (
             <>
-              <FilmInfoLabel frameCount={(activeFilm?.totalFrames || 36) - remainingFrames} remainingFrames={remainingFrames} />
+              <FilmInfoLabel
+                filmName={activeFilm ? (activeFilm.name || activeFilm.title) : 'film rulosu'}
+                frameCount={activeFilm ? (activeFilm.currentFrames ?? activeFilm.capturedFrames ?? ((activeFilm.totalFrames || 36) - remainingFrames)) : 0}
+                totalFrames={activeFilm?.totalFrames || 36}
+                dateLabel={activeFilm?.dateLabel || 'temmuz 2026'}
+                serial={activeFilm?.serial || `POZ-${(activeFilm?.filmTypeName || 'FM').slice(0, 2).toUpperCase()}`}
+                remainingFrames={remainingFrames}
+              />
 
               {/* Active Film Roll Selector if multiple films */}
               {activeFilmsList.length > 1 && (
@@ -523,4 +665,56 @@ const styles = StyleSheet.create({
     color: Colors.yellow,
     fontWeight: '700',
   },
+  viewfinderToolBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginVertical: 6,
+  },
+  viewfinderToolPill: {
+    backgroundColor: '#2A2436',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  viewfinderToolPillActive: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+  viewfinderToolText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '700',
+  },
+  viewfinderToolTextActive: {
+    color: Colors.yellowDark,
+    fontWeight: '900',
+  },
+  filterSelectPill: {
+    backgroundColor: '#2A2436',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  filterSelectPillActive: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+  filterSelectText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '700',
+  },
+  filterSelectTextActive: {
+    color: Colors.yellowDark,
+    fontWeight: '900',
+  },
 });
+

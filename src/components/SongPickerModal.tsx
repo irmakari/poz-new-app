@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -7,10 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { PozIcon } from '@/components/PozIcon';
 import { MOCK_SONGS, MockSongItem } from '@/utils/captureReviewData';
+import { musicApi, MusicTrack } from '@/api/musicApi';
 
 interface SongPickerModalProps {
   visible: boolean;
@@ -24,12 +29,41 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
   onSelectSong,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MockSongItem[]>(MOCK_SONGS);
+  const [loading, setLoading] = useState(false);
 
-  const filteredSongs = MOCK_SONGS.filter(
-    (s) =>
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.artist.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(MOCK_SONGS);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      const res = await musicApi.search(searchQuery);
+      if (res.success && res.songs.length > 0) {
+        const mapped: MockSongItem[] = res.songs.map((s) => ({
+          id: s.id,
+          title: s.title,
+          artist: s.artist,
+          color: '#FFE4E6',
+          albumCover: s.albumCover,
+        } as any));
+        setSearchResults(mapped);
+      } else {
+        // Fallback filter local
+        const filtered = MOCK_SONGS.filter(
+          (s) =>
+            s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.artist.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(filtered);
+      }
+      setLoading(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <Modal
@@ -45,8 +79,12 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
           style={styles.backdropTouch}
         />
 
-        {/* Bottom Cream Sheet Panel */}
-        <View style={styles.sheetPanel}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ width: '100%' }}
+        >
+          {/* Bottom Cream Sheet Panel */}
+          <View style={styles.sheetPanel}>
           {/* Top Grab Handle */}
           <View style={styles.grabHandle} />
 
@@ -76,6 +114,7 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
               placeholderTextColor={Colors.textMuted}
               style={styles.searchInput}
             />
+            {loading && <ActivityIndicator size="small" color={Colors.pinkDark} />}
           </View>
 
           {/* Song List */}
@@ -83,7 +122,7 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
             style={styles.songListScroll}
             showsVerticalScrollIndicator={false}
           >
-            {filteredSongs.map((song) => (
+            {searchResults.map((song) => (
               <TouchableOpacity
                 key={song.id}
                 activeOpacity={0.82}
@@ -93,13 +132,17 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
                 }}
                 style={styles.songItemRow}
               >
-                <View style={[styles.albumSquare, { backgroundColor: song.color }]}>
-                  <PozIcon name="music" size={16} color={Colors.text} />
-                </View>
+                {(song as any).albumCover ? (
+                  <Image source={{ uri: (song as any).albumCover }} style={styles.albumSquareImage} />
+                ) : (
+                  <View style={[styles.albumSquare, { backgroundColor: song.color || '#FFE4E6' }]}>
+                    <PozIcon name="music" size={16} color={Colors.text} />
+                  </View>
+                )}
 
                 <View style={styles.songTextGroup}>
-                  <Text style={styles.songTitleText}>{song.title}</Text>
-                  <Text style={styles.songArtistText}>{song.artist}</Text>
+                  <Text style={styles.songTitleText} numberOfLines={1}>{song.title}</Text>
+                  <Text style={styles.songArtistText} numberOfLines={1}>{song.artist}</Text>
                 </View>
 
                 <View style={styles.selectTag}>
@@ -109,6 +152,7 @@ export const SongPickerModal: React.FC<SongPickerModalProps> = ({
             ))}
           </ScrollView>
         </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -209,6 +253,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(28, 26, 36, 0.1)',
+  },
+  albumSquareImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   songTextGroup: {
     flex: 1,

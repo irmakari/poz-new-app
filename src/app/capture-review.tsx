@@ -26,8 +26,8 @@ import { getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
 
 export default function CaptureReviewScreen() {
   const router = useRouter();
-  const { photoUri, frame = '1', filmId = 'summer-glow-july-2026' } =
-    useLocalSearchParams<{ photoUri?: string; frame: string; filmId: string }>();
+  const { photoUri, frame = '1', filmId = 'summer-glow-july-2026', viewfinderMode = 'compact' } =
+    useLocalSearchParams<{ photoUri?: string; frame: string; filmId: string; viewfinderMode?: string }>();
 
   const { addPhotoFrame } = useApp();
 
@@ -95,6 +95,7 @@ export default function CaptureReviewScreen() {
             dateStr={getFormattedTodayFull()}
             timeStr={getFormattedTime()}
             photoUri={photoUri}
+            viewfinderMode={viewfinderMode}
           />
 
           {/* Quick Primary Save Action Button (1-Tap Save) */}

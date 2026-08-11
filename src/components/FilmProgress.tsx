@@ -74,12 +74,12 @@ const styles = StyleSheet.create({
   },
   filmStripBody: {
     flex: 1,
-    backgroundColor: '#111017', // Pitch black film base
+    backgroundColor: '#0F172A', // Derin Lacivert film bazı
     borderRadius: 6,
     paddingVertical: 3,
     paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(37, 99, 235, 0.4)',
   },
   sprocketRow: {
     flexDirection: 'row',
@@ -97,20 +97,20 @@ const styles = StyleSheet.create({
   },
   framesArea: {
     height: 24,
-    backgroundColor: '#1E1B26',
+    backgroundColor: '#1E293B',
     borderRadius: 3,
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
     marginVertical: 1,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(37, 99, 235, 0.25)',
   },
   progressEmulsion: {
     height: '100%',
-    backgroundColor: Colors.yellow,
+    backgroundColor: '#2563EB', // Canlı Royal Mavi dolgu
     borderRadius: 2,
-    opacity: 0.85,
+    opacity: 0.9,
   },
   negativeFramesOverlay: {
     ...StyleSheet.absoluteFill,

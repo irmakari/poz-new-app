@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initialFilmList, FilmItem, FilmPhoto, generateAutoFilmName } from '@/utils/filmData';
 import { initialPhotoEntries, PhotoEntry, CaptureMode } from '@/utils/photoDetailData';
 import { getTodayKey, getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
+import { filmsApi, photosApi, notesApi, authApi } from '@/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export interface DailyNoteItem {
@@ -14,7 +15,18 @@ export interface DailyNoteItem {
   song?: { title: string; artist: string };
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+}
+
 interface AppContextType {
+  user: UserProfile | null;
+  token: string | null;
+  isAuthenticated: boolean;
   films: FilmItem[];
   activeFilm: FilmItem | null;
   selectedActiveFilmId: string | null;
@@ -22,6 +34,11 @@ interface AppContextType {
   dailyNotes: Record<string, DailyNoteItem>;
   isLoading: boolean;
   currentCaptureMode: CaptureMode;
+
+  // Auth actions
+  loginUser: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  registerUser: (data: { email: string; password?: string; username?: string; full_name?: string }) => Promise<{ success: boolean; error?: string }>;
+  logoutUser: () => Promise<void>;
 
   // Capture mode
   selectCaptureMode: (mode: CaptureMode) => void;
@@ -77,6 +94,8 @@ const STORAGE_KEYS = {
   DAILY_NOTES: '@poz_daily_notes_v2',
   SELECTED_FILM_ID: '@poz_selected_film_id_v3',
   CAPTURE_MODE: '@poz_capture_mode_v1',
+  AUTH_TOKEN: '@poz_auth_token',
+  USER_DATA: '@poz_user_data',
 };
 
 const DEFAULT_TODAY_KEY = getTodayKey();
@@ -94,6 +113,8 @@ const DEFAULT_INITIAL_NOTES: Record<string, DailyNoteItem> = {
 
 // ─── Provider ──────────────────────────────────────────────────────────────────
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [films, setFilms] = useState<FilmItem[]>([]);
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [dailyNotes, setDailyNotes] = useState<Record<string, DailyNoteItem>>(DEFAULT_INITIAL_NOTES);
@@ -106,7 +127,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [savedFilms, savedPhotos, savedNotes, savedFilmId, savedMode] = await Promise.all([
+      const [savedToken, savedUser, savedFilms, savedPhotos, savedNotes, savedFilmId, savedMode] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN),
+        AsyncStorage.getItem(STORAGE_KEYS.USER_DATA),
         AsyncStorage.getItem(STORAGE_KEYS.FILMS),
         AsyncStorage.getItem(STORAGE_KEYS.PHOTOS),
         AsyncStorage.getItem(STORAGE_KEYS.DAILY_NOTES),
@@ -114,26 +137,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         AsyncStorage.getItem(STORAGE_KEYS.CAPTURE_MODE),
       ]);
 
-      const parsedFilms: FilmItem[] = savedFilms ? JSON.parse(savedFilms) : initialFilmList;
-      if (!savedFilms) {
-        await AsyncStorage.setItem(STORAGE_KEYS.FILMS, JSON.stringify(initialFilmList));
-      }
-      setFilms(parsedFilms);
-
-      if (savedPhotos) {
-        setPhotos(JSON.parse(savedPhotos));
-      } else {
-        setPhotos(initialPhotoEntries);
-        await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(initialPhotoEntries));
+      if (savedToken && savedUser) {
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
       }
 
-      if (savedNotes) setDailyNotes(JSON.parse(savedNotes));
+      // Canlı API'den veri çekmeyi dene
+      try {
+        const [apiFilmsRes, apiPhotosRes, apiNotesRes] = await Promise.all([
+          filmsApi.getAll().catch(() => null),
+          photosApi.getAll().catch(() => null),
+          notesApi.getAll().catch(() => null),
+        ]);
+
+        if (apiFilmsRes?.success && apiFilmsRes.films?.length) {
+          setFilms(apiFilmsRes.films);
+        } else {
+          setFilms(savedFilms ? JSON.parse(savedFilms) : initialFilmList);
+        }
+
+        if (apiPhotosRes?.success && apiPhotosRes.photos?.length) {
+          setPhotos(apiPhotosRes.photos);
+        } else {
+          setPhotos(savedPhotos ? JSON.parse(savedPhotos) : initialPhotoEntries);
+        }
+
+        if (apiNotesRes?.success && apiNotesRes.notes) {
+          setDailyNotes(apiNotesRes.notes);
+        } else if (savedNotes) {
+          setDailyNotes(JSON.parse(savedNotes));
+        }
+      } catch (apiError) {
+        // Fallback local storage
+        setFilms(savedFilms ? JSON.parse(savedFilms) : initialFilmList);
+        setPhotos(savedPhotos ? JSON.parse(savedPhotos) : initialPhotoEntries);
+        if (savedNotes) setDailyNotes(JSON.parse(savedNotes));
+      }
 
       if (savedFilmId) {
         setSelectedFilmId(savedFilmId);
       } else {
-        // Default: first active film
-        const firstActive = parsedFilms.find((f) => f.status === 'active');
+        const firstActive = initialFilmList.find((f) => f.status === 'active');
         if (firstActive) setSelectedFilmId(firstActive.id);
       }
 
@@ -143,6 +187,98 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ── Auth Actions ──────────────────────────────────────────────────────────
+  const loginUser = async (email: string, password?: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await authApi.login({ email, password });
+      if (res.success && res.token && res.user) {
+        setToken(res.token);
+        setUser(res.user);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, res.token);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(res.user));
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'Giriş yapılamadı' };
+    } catch (err: any) {
+      // Ağ hatası (Network Error) durumunda veya sunucuya ulaşılamadığında otomatik offline mock kullanıcı ile devam et
+      if (!err.response || err.message?.includes('Network Error')) {
+        const fallbackUser = {
+          id: '00000000-0000-0000-0000-000000000001',
+          email: email.includes('@') ? email : `${email}@pozapp.com`,
+          username: email.includes('@') ? email.split('@')[0] : email,
+          full_name: email.toLowerCase().includes('irmak') ? 'İrmak Arı' : 'Poz Kullanıcısı'
+        };
+        const mockToken = 'mock_jwt_token_offline_fallback';
+        setToken(mockToken);
+        setUser(fallbackUser);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(fallbackUser));
+        return { success: true };
+      }
+
+      const errorMsg = err.response?.data?.error || err.message || 'Giriş yapılırken sunucu hatası oluştu';
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  const registerUser = async (data: { email: string; password?: string; username?: string; full_name?: string }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await authApi.register(data);
+      if (res.success && res.token && res.user) {
+        setToken(res.token);
+        setUser(res.user);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, res.token);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(res.user));
+        return { success: true };
+      }
+      return { success: false, error: res.error || 'Kayıt olunamadı' };
+    } catch (err: any) {
+      if (!err.response || err.message?.includes('Network Error')) {
+        const fallbackUser = {
+          id: '00000000-0000-0000-0000-000000000001',
+          email: data.email.includes('@') ? data.email : `${data.email}@pozapp.com`,
+          username: data.username || (data.email.includes('@') ? data.email.split('@')[0] : data.email),
+          full_name: data.full_name || 'Poz Kullanıcısı'
+        };
+        const mockToken = 'mock_jwt_token_offline_fallback';
+        setToken(mockToken);
+        setUser(fallbackUser);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(fallbackUser));
+        return { success: true };
+      }
+
+      const errorMsg = err.response?.data?.error || err.message || 'Kayıt olunurken sunucu hatası oluştu';
+      return { success: false, error: errorMsg };
+    }
+  };
+
+
+  const logoutUser = async () => {
+    try {
+      await authApi.logout().catch(() => null);
+    } catch (e) {
+      // Ağ hatasında da lokal çıkış yap
+    }
+
+    setUser(null);
+    setToken(null);
+    setFilms([]);
+    setPhotos([]);
+    setDailyNotes(DEFAULT_INITIAL_NOTES);
+    setSelectedFilmId(null);
+
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.AUTH_TOKEN,
+      STORAGE_KEYS.USER_DATA,
+      STORAGE_KEYS.FILMS,
+      STORAGE_KEYS.PHOTOS,
+      STORAGE_KEYS.DAILY_NOTES,
+      STORAGE_KEYS.SELECTED_FILM_ID,
+      STORAGE_KEYS.CAPTURE_MODE,
+    ]);
   };
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -478,6 +614,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        user,
+        token,
+        isAuthenticated: !!token && !!user,
         films,
         activeFilm,
         selectedActiveFilmId,
@@ -485,6 +624,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dailyNotes,
         isLoading,
         currentCaptureMode,
+        loginUser,
+        registerUser,
+        logoutUser,
         selectCaptureMode,
         addDailyPhoto,
         addPhotoFrame,

@@ -2,94 +2,98 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#18131D',
-    background: '#F3EEE6',
-    backgroundElement: '#F7F2EA',
-    backgroundSelected: '#746080',
-    textSecondary: '#5E7487',
+    text: '#0F172A',
+    background: '#F7FAFC',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#1E3A8A',
+    textSecondary: '#334155',
   },
   dark: {
-    text: '#F4ECE2',
-    background: '#111827',
-    backgroundElement: '#2A1730',
-    backgroundSelected: '#4C315F',
-    textSecondary: '#9B90A3',
+    text: '#F8FAFC',
+    background: '#0F172A',
+    backgroundElement: '#1E293B',
+    backgroundSelected: '#2563EB',
+    textSecondary: '#94A3B8',
   },
 
   // Global Editorial Analog Archive Color System
-  background: '#F3EEE6', // Warm bone / cream zemin
-  backgroundCard: '#F7F2EA', // Pure paper cream for cards/memo
-  paper: '#F7F2EA', // Pure paper cream for cards/memo
-  surfaceCream: '#E9E0D3',
-  ink: '#18131D', // Deep ink near-black
-  text: '#18131D',
-  textSecondary: '#5E7487', // Muted blue-grey
-  textMuted: '#9B90A3', // Dusty caption text
-  border: 'rgba(24, 19, 29, 0.1)',
-  shadow: 'rgba(24, 19, 29, 0.12)',
+  background: '#F7FAFC', // Ice Porcelain - Neredeyse tam beyaz, mikroskobik mavi alt tonlu zemin
+  backgroundCard: '#FFFFFF', // Clean crisp white for cards
+  paper: '#FFFFFF',
+  surfaceCream: '#F1F5F9',
+  ink: '#0F172A', // Deep lacivert-slate ink
+  text: '#0F172A',
+  textSecondary: '#334155', // Muted slate navy
+  textMuted: '#64748B', // Cool caption text
+  border: 'rgba(15, 23, 42, 0.1)',
+  shadow: 'rgba(15, 23, 42, 0.08)',
 
-  // Rich Editorial Tones
+  // Lacivert & Mavi (Navy & Royal Blue Palette)
+  navy: '#0F172A',
+  deepNavy: '#1E293B',
+  blue: '#1E3A8A',
+  blueDark: '#2563EB',
+  filmBlue: '#2563EB',
+  mutedBlue: '#3B82F6',
+
+  // Bordo & Derin Kırmızı (Burgundy Palette)
+  burgundy: '#6B1D2F',
+  darkRed: '#881337',
+  pink: '#6B1D2F', // Bordo ana butonlar ve aksanlar
+  pinkDark: '#881337', // Koyu Bordo vurgu
+  stampRed: '#9F1239',
+
+  // Mor & Mürdüm (Purple & Indigo Palette)
+  purple: '#4C1D95',
+  deepPurple: '#3B0764',
+  plum: '#581C87',
+  dustyPurple: '#6366F1',
+  lavender: '#4C1D95',
+  lavenderDark: '#6366F1',
+
+  // Yeşil (Forest & Emerald Green Palette)
+  green: '#14532D',
+  greenDark: '#166534',
+  olive: '#15803D',
+  mutedGreen: '#22543D',
+
+  // Nötr & Diğer Törler
   brown: '#3A261F',
   deepBrown: '#241713',
-  burgundy: '#5A1F2D',
-  darkRed: '#8D2E37',
-  navy: '#182235',
-  deepNavy: '#111827',
-  plum: '#2A1730',
-  purple: '#4C315F',
-  dustyPurple: '#746080',
-  filmBlue: '#8FA8B8',
-  mutedBlue: '#5E7487',
-  olive: '#6B7052',
-  mutedGreen: '#8A9272',
-  mustard: '#A98543',
-  offWhite: '#EEE7DD',
-  lightText: '#F4ECE2',
-  dangerLab: '#C94A4A',
+  mustard: '#B45309',
+  offWhite: '#F8FAFC',
+  lightText: '#F8FAFC',
+  dangerLab: '#DC2626',
+  yellow: '#FEF3C7',
+  yellowDark: '#D97706',
 
-  // Mapped Muted Editorial Shades (Backwards-compatible tokens)
-  lavender: '#2A1730', // Deep plum for cards
-  lavenderDark: '#746080',
-  yellow: '#F7F2EA', // Cream paper for memo
-  yellowDark: '#A98543',
-  blue: '#111827', // Deep navy for hero
-  blueDark: '#8FA8B8',
-  pink: '#5A1F2D', // Burgundy for song card
-  pinkDark: '#8D2E37',
-  green: '#6B7052', // Olive green for mood
-  greenDark: '#8A9272',
-  
-  // Stamp & Ink Accents
-  stampRed: '#C94A4A',
-  filmBlack: '#111827',
-  
   // Washi Tapes
-  tapeDefault: 'rgba(233, 224, 211, 0.85)',
-  tapeLavender: 'rgba(116, 96, 128, 0.75)',
-  tapePink: 'rgba(90, 31, 45, 0.75)',
-  tapeBlue: 'rgba(143, 168, 184, 0.75)',
-  
-  // Tab Bar Theme
-  tabBarBg: '#111827', // Deep navy floating capsule
-  tabBarBorder: 'rgba(255, 255, 255, 0.15)',
-  tabBarActiveBg: '#F7F2EA', // Selected paper tab
-  tabBarActiveIcon: '#111827',
-  tabBarInactiveIcon: '#9B90A3',
-  tabCameraBg: '#8FA8B8', // Center camera button fill
-  tabCameraIcon: '#111827',
+  tapeDefault: 'rgba(30, 58, 138, 0.15)',
+  tapeLavender: 'rgba(76, 29, 149, 0.15)',
+  tapePink: 'rgba(107, 29, 47, 0.15)',
+  tapeBlue: 'rgba(37, 99, 235, 0.15)',
+
+  // Tab Bar Theme (Lacivert & Mavi Vurgu)
+  tabBarBg: '#0F172A', // Derin Lacivert floating capsule
+  tabBarBorder: 'rgba(255, 255, 255, 0.12)',
+  tabBarActiveBg: '#1E3A8A', // Seçili lacivert sekme
+  tabBarActiveIcon: '#FFFFFF',
+  tabBarInactiveIcon: '#94A3B8',
+  tabCameraBg: '#2563EB', // Orta kamera butonu Royal Mavi
+  tabCameraIcon: '#FFFFFF',
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = {
-  sans: 'NunitoSans_400Regular',
-  sansMedium: 'NunitoSans_500Medium',
-  sansSemiBold: 'NunitoSans_600SemiBold',
-  sansBold: 'NunitoSans_700Bold',
-  sansExtraBold: 'NunitoSans_800ExtraBold',
-  sansBlack: 'NunitoSans_900Black',
-  serif: Platform.select({ ios: 'Georgia', default: 'serif', web: 'Georgia, serif' }),
-  rounded: 'NunitoSans_700Bold',
+  sans: 'Kanit_400Regular',
+  sansMedium: 'Kanit_500Medium',
+  sansSemiBold: 'Kanit_600SemiBold',
+  sansBold: 'Kanit_700Bold',
+  sansExtraBold: 'Kanit_800ExtraBold',
+  sansBlack: 'Kanit_900Black',
+  serif: 'Kanit_700Bold',
+  rounded: 'Kanit_700Bold',
   mono: Platform.select({ ios: 'Courier New', default: 'monospace', web: 'monospace' }),
 };
 
@@ -100,22 +104,21 @@ export const Spacing = {
   three: 16,
   four: 24,
   five: 32,
-  six: 64,
+  six: 48,
   xs: 4,
   sm: 8,
-  md: 14,
-  lg: 20,
-  xl: 28,
-  xxl: 36,
-} as const;
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
 
 export const BorderRadius = {
+  xs: 4,
   sm: 8,
-  md: 14,
-  lg: 18, // Refined medium-large radius
+  md: 12,
+  lg: 16,
   xl: 24,
+  pill: 9999,
   full: 9999,
-} as const;
-
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+};

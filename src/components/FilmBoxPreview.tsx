@@ -24,6 +24,15 @@ export const FilmBoxPreview: React.FC<FilmBoxPreviewProps> = ({
   startDateStr,
   serialNumber,
 }) => {
+  const isDarkBg = filmType.primaryColor.startsWith('#1') || filmType.primaryColor.startsWith('#2');
+  const titleTextColor = isDarkBg ? '#FFFDF9' : Colors.text;
+  const metaSubtitleColor = isDarkBg ? 'rgba(255, 255, 255, 0.75)' : Colors.textSecondary;
+  const tagBgColor = isDarkBg ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.65)';
+  const tagBorderColor = isDarkBg ? 'rgba(255, 255, 255, 0.25)' : 'rgba(28, 26, 36, 0.1)';
+  const tagTextColor = isDarkBg ? '#FFFDF9' : Colors.text;
+  const footerTextColor = isDarkBg ? 'rgba(255, 255, 255, 0.5)' : Colors.textMuted;
+  const serialTextColor = isDarkBg ? '#A5C4D4' : filmType.darkColor;
+
   return (
     <View style={styles.container}>
       <SectionTitle title="rulon nasıl görünecek?" stamp="LIVE 3D PREVIEW" />
@@ -42,7 +51,7 @@ export const FilmBoxPreview: React.FC<FilmBoxPreviewProps> = ({
         <View style={styles.headerRow}>
           <View style={styles.titleGroup}>
             <PaperStamp label="FRESH ROLL" color={filmType.darkColor} rotation="-3deg" />
-            <Text style={[styles.serialText, { color: filmType.darkColor }]}>
+            <Text style={[styles.serialText, { color: serialTextColor }]}>
               {serialNumber}
             </Text>
           </View>
@@ -59,26 +68,26 @@ export const FilmBoxPreview: React.FC<FilmBoxPreviewProps> = ({
 
         {/* Film Title & Info Badges */}
         <View style={styles.titleArea}>
-          <Text style={styles.filmTitleText}>{displayName}</Text>
-          <Text style={styles.metaSubtitle}>
+          <Text style={[styles.filmTitleText, { color: titleTextColor }]}>{displayName}</Text>
+          <Text style={[styles.metaSubtitle, { color: metaSubtitleColor }]}>
             {filmType.name.toUpperCase()} • {frameCount.count} EXPOSURES • ISO {filmType.iso}
           </Text>
         </View>
 
         {/* Purpose & Date Tags Row */}
         <View style={styles.tagsRow}>
-          <View style={styles.tagBadge}>
-            <Text style={styles.tagBadgeText}>AMAÇ: {purpose.label.toUpperCase()}</Text>
+          <View style={[styles.tagBadge, { backgroundColor: tagBgColor, borderColor: tagBorderColor }]}>
+            <Text style={[styles.tagBadgeText, { color: tagTextColor }]}>AMAÇ: {purpose.label.toUpperCase()}</Text>
           </View>
 
-          <View style={styles.tagBadge}>
-            <Text style={styles.tagBadgeText}>BAŞLANGIÇ: {startDateStr.toUpperCase()}</Text>
+          <View style={[styles.tagBadge, { backgroundColor: tagBgColor, borderColor: tagBorderColor }]}>
+            <Text style={[styles.tagBadgeText, { color: tagTextColor }]}>BAŞLANGIÇ: {startDateStr.toUpperCase()}</Text>
           </View>
         </View>
 
         {/* Serial Footer */}
         <View style={styles.footerRow}>
-          <Text style={styles.footerCodeText}>POZ 35MM EMULSION • READY TO LOAD</Text>
+          <Text style={[styles.footerCodeText, { color: footerTextColor }]}>POZ 35MM EMULSION • READY TO LOAD</Text>
         </View>
       </ScrapbookCard>
     </View>

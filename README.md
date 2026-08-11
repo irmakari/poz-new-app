@@ -1,50 +1,51 @@
-# Welcome to your Expo app 👋
+# Poz App 📸 35mm Analog Film & Memory Journal
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **"Anılarını filme dönüştür. Günlerini fotoğraflar, notlar ve nostaljik hislerle sakla."**
 
-## Get started
+---
 
-1. Install dependencies
+## 📌 Proje Hakkında
 
-   ```bash
-   npm install
-   ```
+**Poz App**, kullanıcıların anılarını analog 35mm film makaraları konseptiyle ölümsüzleştirdiği, günlük notlar tuttuğu ve fotoğraflar biriktirdiği mobil bir sosyal anı günlüğüdür.
 
-2. Start the app
+### 🛠️ Teknolojik Mimari
 
-   ```bash
-   npx expo start
-   ```
+- **Frontend:** React Native (Expo ~v54), TypeScript, Expo Router (File-based Routing)
+- **Backend:** Node.js, Express.js, JWT Authentication
+- **Veritabanı & Depolama:** Supabase PostgreSQL & Supabase Storage (Photo Bucket)
+- **Arayüz & Tasarım:** Custom Scrapbook Editorial UI, Y2K Nostalgic Aesthetic, High-End Color Palette (`#F7FAFC` Ice Porcelain, Derin Lacivert `#0F172A`, Bordo `#6B1D2F`, Orman Yeşili `#14532D`)
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🚀 Gelecek Özellikler & Yol Haritası (Future Features / TODO)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Aşağıdaki özellikler uygulamanın gelecek sürümlerinde canlıya alınmak üzere planlanmıştır:
 
-## Get a fresh project
+- [ ] 🎵 **Günün Şarkısı (Live Music Integration & Audio Player):**
+  - iTunes Search API entegrasyonu ile canlı müzik ve albüm kapağı arama.
+  - O güne özel şarkı seçip anı kartında kaset çalarlı ses önizlemesi ile dinleme.
+- [ ] 🎞️ **Fiziksel Film Yıkama & Baskı Siparişi (Darkroom Developing Service):**
+  - Dolduğun 36 karelik makaraları fiziksel kargo adresi seçerek banyo/baskı siparişine dönüştürme.
+- [ ] 👥 **Ortak Film Makaraları (Shared Film Rolls):**
+  - Arkadaşlarınla birlikte ortak film makarası oluşturup aynı ruloya fotoğraf çekebilme.
+- [ ] 🔔 **Günlük Hatırlatıcı Bildirimler (Push Notifications):**
+  - "Günün karesini çekmeyi unutma" analog hatırlatıcı bildirimleri.
 
-When you're ready, run:
+---
 
+## 💻 Kurulum & Çalıştırma
+
+### 1. Backend Server
 ```bash
-npm run reset-project
+cd server
+npm install
+npm run dev
 ```
+Express sunucusu `http://localhost:5001` portunda yayına başlar.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 2. Expo Frontend
+```bash
+npm install
+npx expo start
+```
+Expo Go veya iOS/Android simülatörünüzle QR kodunu okutarak uygulamayı başlatabilirsiniz.

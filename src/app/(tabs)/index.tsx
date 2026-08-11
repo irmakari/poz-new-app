@@ -21,6 +21,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -149,7 +151,16 @@ export default function HomeScreen() {
         <WeekSelector />
 
         {/* 2x2 Masonry Scrapbook Collage Grid */}
-        <SectionTitle title="bugünün anıları" categoryLabel="EDITORIAL LOG" code="LOG-0728" stamp="DAILY" />
+        <View style={styles.sectionHeaderWithAdd}>
+          <SectionTitle title="bugünün anıları" categoryLabel="EDITORIAL LOG" code="LOG-0728" stamp="DAILY" />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/camera')}
+            style={styles.addMemoryHeaderButton}
+          >
+            <Text style={styles.addMemoryHeaderButtonText}>+ ANI EKLE</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Organic Scrapbook Collage (Staggered Layout) */}
         <View style={styles.collageContainer}>
@@ -187,7 +198,7 @@ export default function HomeScreen() {
 
             {/* 4. Green Mood Sticker Card */}
             <ScrapbookCard
-              bgColor={Colors.olive}
+              bgColor={Colors.green}
               rotation="3deg"
               hasTape="top-right"
               tapeColor={Colors.tapeDefault}
@@ -213,7 +224,7 @@ export default function HomeScreen() {
           <View style={styles.collageColumnRight}>
             {/* 2. Mat Lavender Cardstock with Stacked Photo Prints */}
             <ScrapbookCard
-              bgColor={Colors.plum}
+              bgColor={Colors.navy}
               rotation="1.6deg"
               hasTape="top-right"
               tapeColor={Colors.tapeLavender}
@@ -254,156 +265,147 @@ export default function HomeScreen() {
                     </View>
                   </>
                 ) : (
-                  <View style={{ alignItems: 'center', justifyContent: 'center', height: 110, gap: 4 }}>
-                    <PozIcon name="camera" size={30} color="#8FA8B8" />
-                    <Text style={{ fontSize: 10.5, fontFamily: Fonts.mono, color: '#8FA8B8', textAlign: 'center' }}>
-                      henüz kare çekilmedi
-                    </Text>
-                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => router.push('/(tabs)/camera')}
+                    style={styles.addKareEmptyButton}
+                  >
+                    <PozIcon name="camera" size={24} color="#93C5FD" />
+                    <Text style={styles.addKareEmptyText}>+ KARE ÇEK</Text>
+                  </TouchableOpacity>
                 )}
-              </View>
-            </ScrapbookCard>
-
-            {/* 3. Pink Cassette Tape / Concert Ticket Card */}
-            <ScrapbookCard
-              bgColor={Colors.burgundy}
-              rotation="-1.8deg"
-              hasTape="bottom-left"
-              tapeColor={Colors.tapeDefault}
-              padding={Spacing.md}
-              onPress={() => setIsSongPickerOpen(true)}
-              style={styles.pinkSongCard}
-            >
-              <View style={styles.cardHeaderRow}>
-                <PozIcon name="music" size={16} color="#F4ECE2" />
-                <Text style={styles.songLabelLight}>günün şarkısı</Text>
-              </View>
-
-              {/* Physical Cassette Label / Album Badge */}
-              <View style={styles.cassetteContainer}>
-                <View style={styles.albumCoverBox}>
-                  <PozIcon name="music" size={18} color="#F4ECE2" />
-                </View>
-                <View style={styles.songInfoGroup}>
-                  <Text style={styles.songTitleTextLight} numberOfLines={1}>
-                    {hasSong ? todayNoteObj!.song!.title : 'şarkı seçilmedi'}
-                  </Text>
-                  <Text style={styles.artistNameTextLight} numberOfLines={1}>
-                    {hasSong ? todayNoteObj!.song!.artist : 'dokunarak ekle 🎵'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Tape Notches / Sound Wave */}
-              <View style={styles.audioWaveformMock}>
-                <View style={[styles.waveBar, { height: 8 }]} />
-                <View style={[styles.waveBar, { height: 16 }]} />
-                <View style={[styles.waveBar, { height: 10 }]} />
-                <View style={[styles.waveBar, { height: 20 }]} />
-                <View style={[styles.waveBar, { height: 12 }]} />
-                <View style={[styles.waveBar, { height: 6 }]} />
               </View>
             </ScrapbookCard>
           </View>
         </View>
       </ScrollView>
 
-      {/* Edit Daily Note Modal */}
+      {/* Edit Daily Note Bottom Sheet */}
       <Modal
         visible={isEditNoteModalOpen}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setIsEditNoteModalOpen(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitleText}>günün notunu düzenle</Text>
-              <TouchableOpacity
-                onPress={() => setIsEditNoteModalOpen(false)}
-                style={styles.closeButton}
-              >
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity
+          style={styles.sheetOverlay}
+          activeOpacity={1}
+          onPress={() => setIsEditNoteModalOpen(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.bottomSheetCard}
+            >
+              <View style={styles.sheetHandle} />
 
-            <TextInput
-              style={styles.modalTextInput}
-              multiline={true}
-              placeholder="Bugün nasıl geçti? Birkaç cümle yaz..."
-              placeholderTextColor={Colors.textMuted}
-              value={noteInputText}
-              onChangeText={setNoteInputText}
-            />
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitleText}>günün notunu düzenle</Text>
+                <TouchableOpacity
+                  onPress={() => setIsEditNoteModalOpen(false)}
+                  style={styles.closeButton}
+                >
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.modalDeleteButton}
-                onPress={handleDeleteNote}
-              >
-                <Text style={styles.modalDeleteText}>Sil</Text>
-              </TouchableOpacity>
+              <TextInput
+                style={styles.modalTextInput}
+                multiline={true}
+                placeholder="Bugün nasıl geçti? Birkaç cümle yaz..."
+                placeholderTextColor={Colors.textMuted}
+                value={noteInputText}
+                onChangeText={setNoteInputText}
+              />
 
-              <TouchableOpacity
-                style={styles.modalSaveButton}
-                onPress={handleSaveNote}
-              >
-                <Text style={styles.modalSaveText}>Kaydet</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+              <View style={styles.modalActionRow}>
+                <TouchableOpacity
+                  style={styles.modalDeleteButton}
+                  onPress={handleDeleteNote}
+                >
+                  <Text style={styles.modalDeleteText}>Sil</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalSaveButton}
+                  onPress={handleSaveNote}
+                >
+                  <Text style={styles.modalSaveText}>Kaydet</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
 
-      {/* Mood Selector Modal */}
+      {/* Mood Selector Bottom Sheet */}
       <Modal
         visible={isMoodModalOpen}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={() => setIsMoodModalOpen(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitleText}>bugünkü hissini seç</Text>
-              <TouchableOpacity
-                onPress={() => setIsMoodModalOpen(false)}
-                style={styles.closeButton}
-              >
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity
+          style={styles.sheetOverlay}
+          activeOpacity={1}
+          onPress={() => setIsMoodModalOpen(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={styles.bottomSheetCard}
+            >
+              <View style={styles.sheetHandle} />
 
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 12 }}>
-              {HOME_MOOD_OPTIONS.map((m) => (
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitleText}>bugünkü hissini seç</Text>
                 <TouchableOpacity
-                  key={m}
-                  activeOpacity={0.8}
-                  onPress={async () => {
-                    await saveDailyNote(todayKey, { mood: m });
-                    setIsMoodModalOpen(false);
-                  }}
-                  style={{
-                    backgroundColor: todayNoteObj?.mood === m ? Colors.olive : Colors.paper,
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                    borderRadius: BorderRadius.md,
-                    borderWidth: 1,
-                    borderColor: Colors.border,
-                  }}
+                  onPress={() => setIsMoodModalOpen(false)}
+                  style={styles.closeButton}
                 >
-                  <Text style={{
-                    fontFamily: Fonts.sansBold,
-                    fontSize: 13,
-                    color: todayNoteObj?.mood === m ? '#F4ECE2' : Colors.ink
-                  }}>
-                    {m}
-                  </Text>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.text }}>✕</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 12 }}>
+                {HOME_MOOD_OPTIONS.map((m) => (
+                  <TouchableOpacity
+                    key={m}
+                    activeOpacity={0.8}
+                    onPress={async () => {
+                      await saveDailyNote(todayKey, { mood: m });
+                      setIsMoodModalOpen(false);
+                    }}
+                    style={{
+                      backgroundColor: todayNoteObj?.mood === m ? Colors.olive : Colors.paper,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                      borderRadius: BorderRadius.md,
+                      borderWidth: 1,
+                      borderColor: Colors.border,
+                    }}
+                  >
+                    <Text style={{
+                      fontFamily: Fonts.sansBold,
+                      fontSize: 13,
+                      color: todayNoteObj?.mood === m ? '#F4ECE2' : Colors.ink
+                    }}>
+                      {m}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
 
       {/* Song Picker Modal */}
@@ -831,25 +833,34 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     opacity: 0.85,
   },
-  modalOverlay: {
+  sheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.lg,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'flex-end',
   },
-  modalCard: {
+  bottomSheetCard: {
     width: '100%',
     backgroundColor: '#FFFDF9',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl + 10,
     borderWidth: 1,
     borderColor: Colors.border,
     shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     elevation: 8,
+  },
+  sheetHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(28, 26, 36, 0.2)',
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -903,5 +914,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.sansBold,
     color: '#FFFDF9',
+  },
+  sectionHeaderWithAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: 4,
+  },
+  addMemoryHeaderButton: {
+    backgroundColor: '#1E3A8A',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.pill,
+  },
+  addMemoryHeaderButtonText: {
+    fontSize: 11,
+    fontFamily: Fonts.sansBold,
+    color: '#FFFDF6',
+    letterSpacing: 0.5,
+  },
+  addKareEmptyButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 110,
+    gap: 6,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(147, 197, 253, 0.4)',
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  addKareEmptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.sansBold,
+    color: '#93C5FD',
+    letterSpacing: 1,
   },
 });

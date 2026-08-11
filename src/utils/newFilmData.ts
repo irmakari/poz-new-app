@@ -24,9 +24,9 @@ export const FILM_TYPE_OPTIONS: FilmTypeOption[] = [
     id: 'ft-summer-glow',
     name: 'summer glow',
     iso: 400,
-    description: 'sıcak ve yumuşak tonlar',
-    primaryColor: '#E3D7FF', // Lavender
-    darkColor: '#8F66E3',
+    description: 'derin lacivert tonlar',
+    primaryColor: '#18243B', // Rich Navy Blue (Lacivert)
+    darkColor: '#4A7CA6',
     serialPrefix: 'SG',
   },
   {

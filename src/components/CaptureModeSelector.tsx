@@ -45,18 +45,17 @@ export const CaptureModeSelector: React.FC<CaptureModeSelectorProps> = ({
           onPress={() => onSelectMode('daily')}
           style={[
             styles.modeCard,
-            styles.dailyCard,
-            currentMode === 'daily' && styles.dailySelectedBorder,
+            currentMode === 'daily' ? styles.dailyCardActive : styles.cardInactive,
           ]}
         >
           <View style={styles.modeIconRow}>
             <View
               style={[
                 styles.iconBadge,
-                currentMode === 'daily' ? styles.dailyIconBadgeActive : styles.dailyIconBadgeInactive,
+                currentMode === 'daily' ? styles.dailyIconBadgeActive : styles.iconBadgeInactive,
               ]}
             >
-              <PozIcon name="photo" size={13} color={currentMode === 'daily' ? '#181520' : Colors.textSecondary} />
+              <PozIcon name="photo" size={13} color={currentMode === 'daily' ? '#181520' : 'rgba(255, 255, 255, 0.4)'} />
             </View>
 
             <Text
@@ -96,18 +95,17 @@ export const CaptureModeSelector: React.FC<CaptureModeSelectorProps> = ({
           onPress={() => onSelectMode('film')}
           style={[
             styles.modeCard,
-            styles.filmCard,
-            currentMode === 'film' && styles.filmSelectedBorder,
+            currentMode === 'film' ? styles.filmCardActive : styles.cardInactive,
           ]}
         >
           <View style={styles.modeIconRow}>
             <View
               style={[
                 styles.iconBadge,
-                currentMode === 'film' ? styles.filmIconBadgeActive : styles.filmIconBadgeInactive,
+                currentMode === 'film' ? styles.filmIconBadgeActive : styles.iconBadgeInactive,
               ]}
             >
-              <PozIcon name="films" size={13} color={currentMode === 'film' ? '#FFFDF9' : Colors.textSecondary} />
+              <PozIcon name="films" size={13} color={currentMode === 'film' ? '#181520' : 'rgba(255, 255, 255, 0.4)'} />
             </View>
 
             <Text
@@ -149,37 +147,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   modeCard: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: BorderRadius.md,
     justifyContent: 'center',
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  dailyCard: {
-    backgroundColor: '#FFF1B0', // Pastel yellow paper tag
-    borderWidth: 1.5,
-    borderColor: 'rgba(230, 168, 0, 0.3)',
-  },
-  dailySelectedBorder: {
+  dailyCardActive: {
+    backgroundColor: '#FFF1B0',
+    borderWidth: 2,
     borderColor: '#181520',
-    borderWidth: 2,
-    shadowOpacity: 0.18,
+    shadowColor: '#FFF1B0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
     elevation: 4,
   },
-  filmCard: {
-    backgroundColor: '#231F33', // Deep mürdüm physical tag
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  filmSelectedBorder: {
-    borderColor: Colors.lavender,
+  filmCardActive: {
+    backgroundColor: '#8F66E3',
     borderWidth: 2,
-    shadowOpacity: 0.22,
+    borderColor: '#FFFDF9',
+    shadowColor: '#8F66E3',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
     elevation: 4,
+  },
+  cardInactive: {
+    backgroundColor: '#14111D',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    opacity: 0.5,
   },
   modeIconRow: {
     flexDirection: 'row',
@@ -196,14 +193,11 @@ const styles = StyleSheet.create({
   dailyIconBadgeActive: {
     backgroundColor: '#FFFDF9',
   },
-  dailyIconBadgeInactive: {
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
-  },
   filmIconBadgeActive: {
-    backgroundColor: '#8F66E3',
+    backgroundColor: '#FFFDF9',
   },
-  filmIconBadgeInactive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  iconBadgeInactive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   modeTitleText: {
     fontSize: 14,
@@ -216,7 +210,7 @@ const styles = StyleSheet.create({
     color: '#FFFDF9',
   },
   titleInactive: {
-    color: Colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.4)',
   },
   modeSubText: {
     fontSize: 10,
@@ -225,12 +219,14 @@ const styles = StyleSheet.create({
   },
   dailySubActive: {
     color: '#5C4A00',
+    fontWeight: '700',
   },
   filmSubActive: {
-    color: Colors.lavender,
+    color: '#F4ECE2',
+    fontWeight: '700',
   },
   subInactive: {
-    color: Colors.textMuted,
+    color: 'rgba(255, 255, 255, 0.25)',
   },
   stampBadgeDaily: {
     marginLeft: 'auto',
@@ -247,7 +243,7 @@ const styles = StyleSheet.create({
   },
   stampBadgeFilm: {
     marginLeft: 'auto',
-    backgroundColor: '#8F66E3',
+    backgroundColor: '#181520',
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 3,

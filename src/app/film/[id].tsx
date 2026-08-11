@@ -5,11 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { FilmDetailHeader } from '@/components/FilmDetailHeader';
 import { FilmStatusStamp } from '@/components/FilmStatusStamp';
-import { ViewModeSelector, ViewMode } from '@/components/ViewModeSelector';
 import { MonthNotesSection } from '@/components/MonthNotesSection';
 import { MonthSongsSection } from '@/components/MonthSongsSection';
 import { MoodStickerGroup } from '@/components/MoodStickerGroup';
 import { FilmDetailsReceipt } from '@/components/FilmDetailsReceipt';
+import { FilmStripViewer } from '@/components/FilmStripViewer';
 import { EmptyFilmView } from '@/components/EmptyFilmView';
 import { SectionTitle } from '@/components/SectionTitle';
 import { DarkroomWashModal } from '@/components/DarkroomWashModal';
@@ -28,7 +28,6 @@ export default function FilmDetailScreen() {
   // Get real PhotoEntry objects belonging to this film from context
   const filmPhotos: PhotoEntry[] = photos.filter((p) => p.filmId === (film?.id ?? ''));
 
-  const [viewMode, setViewMode] = useState<ViewMode>('contact');
   const [isWashModalOpen, setIsWashModalOpen] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -206,50 +205,27 @@ export default function FilmDetailScreen() {
           </View>
         </View>
 
-        {/* ─── Frames Section ──────────────────────────────────────── */}
+        {/* ─── Frames Section (35mm Film Negative Reel Strip) ─────── */}
         <View
           style={styles.sectionContainer}
           onLayout={(e) => setGridY(e.nativeEvent.layout.y)}
         >
           <SectionTitle title="filmin kareleri" stamp={`${total} EXP`} />
-          <ViewModeSelector currentMode={viewMode} onSelectMode={setViewMode} />
 
           {filmPhotos.length > 0 ? (
-            <View style={styles.photoGrid}>
-              {filmPhotos
-                .sort((a, b) => (Number(a.frameNumber) || 0) - (Number(b.frameNumber) || 0))
-                .map((photo) => {
-                  const isOpen = photo.status === 'developed';
-                  const frameNum = photo.frameNumber ? String(photo.frameNumber).padStart(2, '0') : '01';
-                  return (
-                    <TouchableOpacity
-                      key={photo.id}
-                      activeOpacity={isOpen ? 0.85 : 1}
-                      onPress={() => handlePhotoPress(photo)}
-                      style={styles.photoCell}
-                    >
-                      <View style={[styles.photoFrame, !isOpen && styles.closedFrame]}>
-                        {isOpen && photo.photoUri ? (
-                          <Image source={{ uri: photo.photoUri }} style={styles.realImage} resizeMode="cover" />
-                        ) : isOpen ? (
-                          <View style={[styles.openVisual, { backgroundColor: photo.bgColors?.[0] ?? '#C4A882' }]}>
-                            <View style={[styles.visualAccent, { backgroundColor: photo.bgColors?.[1] ?? '#8B5E3C' }]} />
-                            <PozIcon name="photo" size={22} color="#FFFDF6" />
-                          </View>
-                        ) : (
-                          <View style={styles.closedVisual}>
-                            <PozIcon name={film.status === 'developing' ? 'films' : 'lock'} size={16} color="rgba(255,255,255,0.4)" />
-                            <Text style={styles.closedText}>
-                              {film.status === 'developing' ? 'banyoda' : 'kilitli'}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={styles.frameCode}>{frameNum}A</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-            </View>
+            <FilmStripViewer
+              photos={filmPhotos.map((p) => ({
+                id: p.id,
+                frameNumber: Number(p.frameNumber) || 1,
+                code: p.code || `${String(p.frameNumber || 1).padStart(2, '0')}A`,
+                sceneTitle: p.note || 'film karesi',
+                dateStr: p.date || '27.07',
+                isExposed: p.status === 'developed',
+                bgColors: p.bgColors || ['#FFB88C', '#DE6262'],
+                iconName: 'photo',
+              }))}
+              status={film.status}
+            />
           ) : (
             <View style={styles.emptyFrames}>
               <PozIcon name="camera" size={28} color={Colors.textMuted} />
@@ -265,34 +241,8 @@ export default function FilmDetailScreen() {
           <MoodStickerGroup moods={film.moods} monthName={film.dateLabel ? film.dateLabel.split(' ')[0] : 'temmuz'} />
         )}
 
-        {/* ─── Film Bilgileri (Moved Down) ─────────────────────────── */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>film bilgileri</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>seri no</Text>
-            <Text style={styles.infoValue}>{film.serial || 'POZ-FRESH-ROLL'}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>film türü / preset</Text>
-            <Text style={styles.infoValue}>{film.filmTypeName || 'Summer Glow'}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>hassasiyet (iso)</Text>
-            <Text style={styles.infoValue}>ISO {film.iso || 400}</Text>
-          </View>
-          {film.startDate && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>başlangıç tarihi</Text>
-              <Text style={styles.infoValue}>{film.startDate}</Text>
-            </View>
-          )}
-          {film.developedDate && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>banyo tarihi</Text>
-              <Text style={styles.infoValue}>{film.developedDate}</Text>
-            </View>
-          )}
-        </View>
+        {/* ─── Film Bilgileri (Lab Receipt Card UI) ─────────────────── */}
+        <FilmDetailsReceipt film={film} />
 
         {/* ─── Delete Actions ─────────────────────────────────────── */}
         <View style={styles.deleteArea}>

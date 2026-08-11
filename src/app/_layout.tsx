@@ -11,6 +11,14 @@ import {
   NunitoSans_800ExtraBold,
   NunitoSans_900Black,
 } from '@expo-google-fonts/nunito-sans';
+import {
+  Kanit_400Regular,
+  Kanit_500Medium,
+  Kanit_600SemiBold,
+  Kanit_700Bold,
+  Kanit_800ExtraBold,
+  Kanit_900Black,
+} from '@expo-google-fonts/kanit';
 
 import { AppProvider } from '@/context/AppContext';
 
@@ -24,6 +32,12 @@ export default function RootLayout() {
     NunitoSans_700Bold,
     NunitoSans_800ExtraBold,
     NunitoSans_900Black,
+    Kanit_400Regular,
+    Kanit_500Medium,
+    Kanit_600SemiBold,
+    Kanit_700Bold,
+    Kanit_800ExtraBold,
+    Kanit_900Black,
   });
 
   useEffect(() => {

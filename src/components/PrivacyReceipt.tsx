@@ -1,12 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { ScrapbookCard } from '@/components/ScrapbookCard';
 import { PaperStamp } from '@/components/PaperStamp';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
+import { useApp } from '@/context/AppContext';
 
 export const PrivacyReceipt: React.FC = () => {
+  const router = useRouter();
+  const { logoutUser } = useApp();
+
+  const handleLogoutPress = async () => {
+    try {
+      await logoutUser();
+      router.replace('/');
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const handleItemPress = (title: string) => {
     Alert.alert(
       title,
@@ -66,6 +79,21 @@ export const PrivacyReceipt: React.FC = () => {
               <Text style={styles.rowTitleText}>verilerimi indir</Text>
             </View>
             <Text style={styles.arrowText}>›</Text>
+          </TouchableOpacity>
+
+          {/* 3. Logout Row */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleLogoutPress}
+            style={styles.receiptRow}
+          >
+            <View style={styles.leftCol}>
+              <PozIcon name="profile" size={16} color="#DC2626" />
+              <Text style={[styles.rowTitleText, { color: '#DC2626', fontFamily: Fonts.sansBold }]}>
+                oturumu kapat (çıkış yap)
+              </Text>
+            </View>
+            <Text style={[styles.arrowText, { color: '#DC2626' }]}>›</Text>
           </TouchableOpacity>
 
           {/* 3. Delete Account */}

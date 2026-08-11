@@ -20,10 +20,17 @@ export default function FilmsScreen() {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>('all');
   const { films, activeFilm: contextActiveFilm } = useApp();
 
+  // 1. Active Film (Current roll in camera)
   const activeFilm = contextActiveFilm || films.find((f) => f.status === 'active') || films[0];
-  const developingFilm = films.find((f) => f.status === 'developing');
+
+  // 2. Developing / Ready to develop films (In Darkroom or waiting for wash)
+  const developingFilm = films.find((f) => f.status === 'developing' || f.status === 'readyToDevelop');
+
+  // 3. Completed Films (Developed and ready to view)
   const completedFilms = films.filter((f) => f.status === 'completed');
-  const archiveFilms = films.filter((f) => f.id.startsWith('film-arch') || f.status === 'completed');
+
+  // 4. Archived Films (Unique list for Vault Grid - archived or completed, deduplicated)
+  const archiveFilms = films.filter((f) => f.status === 'archived' || f.status === 'completed');
 
   const handlePressFilm = (film: FilmItem) => {
     router.push({
@@ -42,7 +49,7 @@ export default function FilmsScreen() {
         <FilmsHeader />
 
         {/* Active Film Section (Cardstock Envelope) */}
-        <ActiveFilmCard film={activeFilm} />
+        {activeFilm ? <ActiveFilmCard film={activeFilm} /> : null}
 
         {/* Film View Filter Tabs */}
         <FilmFilter
@@ -54,22 +61,24 @@ export default function FilmsScreen() {
         {filterCategory === 'all' && (
           <>
             {/* Completed Films Horizontal Scroll Carousel */}
-            <View style={styles.sectionMargin}>
-              <SectionTitle title="tamamlanan filmler" categoryLabel="FILM ROLLS" code="ROLL-35MM" stamp="COMPLETED" />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScrollContent}
-              >
-                {completedFilms.map((film) => (
-                  <CompletedFilmBox
-                    key={film.id}
-                    film={film}
-                    onPressFilm={handlePressFilm}
-                  />
-                ))}
-              </ScrollView>
-            </View>
+            {completedFilms.length > 0 && (
+              <View style={styles.sectionMargin}>
+                <SectionTitle title="tamamlanan filmler" categoryLabel="FILM ROLLS" code="ROLL-35MM" stamp="COMPLETED" />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalScrollContent}
+                >
+                  {completedFilms.map((film, idx) => (
+                    <CompletedFilmBox
+                      key={`comp-${film.id}-${idx}`}
+                      film={film}
+                      onPressFilm={handlePressFilm}
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Developing Film Section (Karanlık Odada) */}
             {developingFilm && (
@@ -82,16 +91,26 @@ export default function FilmsScreen() {
               </View>
             )}
 
-            {/* Archive 2-Column Grid */}
+            {/* Archive Horizontal Scroll Section with See-All Button */}
             <View style={styles.sectionMargin}>
-              <SectionTitle title="arşiv" categoryLabel="35MM VAULT" code="VAULT-0726" stamp="ARCHIVED" />
-              <View style={styles.archiveGridContainer}>
-                {archiveFilms.map((film) => (
-                  <View key={film.id} style={styles.gridCell}>
+              <SectionTitle
+                title="arşiv"
+                categoryLabel="35MM VAULT"
+                stamp="ARCHIVED"
+                actionLabel="tümünü gör ›"
+                onPressAction={() => router.push('/film/archive')}
+              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalScrollContent}
+              >
+                {archiveFilms.map((film, idx) => (
+                  <View key={`arch-h-${film.id}-${idx}`} style={styles.horizontalCardCell}>
                     <ArchiveFilmCard film={film} onPressFilm={handlePressFilm} />
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             </View>
 
             {/* Start New Film Action Card */}
@@ -102,14 +121,27 @@ export default function FilmsScreen() {
         {filterCategory === 'completed' && (
           <>
             <View style={styles.sectionMargin}>
-              <SectionTitle title="tamamlanan filmler" stamp="ARCHIVED" />
-              <View style={styles.archiveGridContainer}>
-                {[...completedFilms, ...archiveFilms].map((film) => (
-                  <View key={film.id} style={styles.gridCell}>
-                    <ArchiveFilmCard film={film} onPressFilm={handlePressFilm} />
-                  </View>
-                ))}
-              </View>
+              <SectionTitle
+                title="tamamlanan filmler"
+                stamp="COMPLETED"
+                actionLabel="tümünü gör ›"
+                onPressAction={() => router.push('/film/archive')}
+              />
+              {completedFilms.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalScrollContent}
+                >
+                  {completedFilms.map((film, idx) => (
+                    <View key={`tab-comp-h-${film.id}-${idx}`} style={styles.horizontalCardCell}>
+                      <ArchiveFilmCard film={film} onPressFilm={handlePressFilm} />
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <EmptyFilterView />
+              )}
             </View>
             <NewFilmCard />
           </>
@@ -161,6 +193,11 @@ const styles = StyleSheet.create({
   },
   gridCell: {
     width: '48.5%',
+    marginVertical: 4,
+  },
+  horizontalCardCell: {
+    width: 175,
+    marginRight: 10,
     marginVertical: 4,
   },
 });

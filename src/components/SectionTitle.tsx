@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { PaperStamp } from './PaperStamp';
 
@@ -8,6 +8,8 @@ interface SectionTitleProps {
   categoryLabel?: string;
   code?: string;
   stamp?: string;
+  actionLabel?: string;
+  onPressAction?: () => void;
   style?: ViewStyle;
 }
 
@@ -16,6 +18,8 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   categoryLabel,
   code,
   stamp,
+  actionLabel,
+  onPressAction,
   style,
 }) => {
   const defaultCategory = categoryLabel || 'ARCHIVE LOG';
@@ -26,7 +30,13 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
         {/* Top Spaced Mono Category Tag */}
         <View style={styles.topMetaRow}>
           <Text style={styles.monoCategoryText}>{defaultCategory}</Text>
-          {code && <Text style={styles.monoCodeText}>{code}</Text>}
+          {onPressAction ? (
+            <TouchableOpacity activeOpacity={0.75} onPress={onPressAction} style={styles.actionLinkRow}>
+              <Text style={styles.actionLinkText}>{actionLabel || 'tümünü gör ›'}</Text>
+            </TouchableOpacity>
+          ) : (
+            code && <Text style={styles.monoCodeText}>{code}</Text>
+          )}
         </View>
 
         {/* Main Nunito Sans ExtraBold Title */}
@@ -77,6 +87,16 @@ const styles = StyleSheet.create({
     color: Colors.stampRed,
     letterSpacing: 1,
     fontWeight: '800',
+  },
+  actionLinkRow: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  actionLinkText: {
+    fontSize: 11,
+    fontFamily: Fonts.sansBold,
+    color: Colors.stampRed,
+    letterSpacing: 0.2,
   },
   titleRow: {
     flexDirection: 'row',

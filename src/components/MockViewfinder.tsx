@@ -6,9 +6,11 @@ import { FocusFrame } from '@/components/FocusFrame';
 import { GrainOverlay } from '@/components/GrainOverlay';
 import { PozIcon } from '@/components/PozIcon';
 import { getFormattedTodayStamp } from '@/utils/dateUtils';
+import { FILTERS, FilterType } from '@/constants/filmFilters';
 
 export type FlashState = 'auto' | 'on' | 'off';
 export type CameraFacing = 'back' | 'front';
+export type ViewfinderMode = 'compact' | 'cinematic' | 'expanded';
 
 interface MockViewfinderProps {
   flashState: FlashState;
@@ -16,6 +18,10 @@ interface MockViewfinderProps {
   flashAnimOpacity?: Animated.Value;
   cameraRef?: React.RefObject<CameraView | null>;
   isFocused?: boolean;
+  viewfinderMode?: ViewfinderMode;
+  isMirrored?: boolean;
+  selectedFilter?: FilterType;
+  isDreamyGlow?: boolean;
 }
 
 export const MockViewfinder: React.FC<MockViewfinderProps> = ({
@@ -24,18 +30,34 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
   flashAnimOpacity,
   cameraRef,
   isFocused = true,
+  viewfinderMode = 'compact',
+  isMirrored = false,
+  selectedFilter = 'dazz-green',
+  isDreamyGlow = true,
 }) => {
   const { width } = useWindowDimensions();
+  const currentFilterObj = FILTERS.find((f) => f.id === selectedFilter) || FILTERS[0];
 
-  // Responsive width calculation: fit within screen with padding
-  const viewfinderWidth = Math.min(width - 48, 380);
-  const viewfinderHeight = Math.round(viewfinderWidth * 0.65);
+  // 3 Frame Size Aspect Ratios:
+  // 1. Compact (35mm wide): 1.4 ratio
+  // 2. Cinematic (Ultra-wide, height even smaller): 1.85 ratio
+  // 3. Expanded (Dazz portrait): 3:4 ratio
+  const viewfinderWidth = Math.min(width - 32, 380);
+  let viewfinderHeight = Math.round(viewfinderWidth / 1.4);
+  if (viewfinderMode === 'expanded') {
+    viewfinderHeight = Math.round(viewfinderWidth * 1.333);
+  } else if (viewfinderMode === 'cinematic') {
+    viewfinderHeight = Math.round(viewfinderWidth / 1.85);
+  }
 
   const getFlashText = () => {
     if (flashState === 'auto') return '⚡ AUTO';
     if (flashState === 'on') return '⚡ AÇIK';
     return '⚡ KAPALI';
   };
+
+  // Ön kamera için ayna varsayılanı true (gördüğün gibi kalsın, çektikten sonra dönmesin!)
+  const isFrontFrontMirror = facing === 'front' ? !isMirrored : isMirrored;
 
   return (
     <View style={[styles.outerFrame, { width: viewfinderWidth, height: viewfinderHeight }]}>
@@ -48,9 +70,10 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
             style={StyleSheet.absoluteFill}
             facing={facing}
             flash={flashState}
+            mirror={isFrontFrontMirror}
           />
         ) : (
-          <View style={styles.sceneBackground}>
+          <View style={[styles.sceneBackground, isFrontFrontMirror && { transform: [{ scaleX: -1 }] }]}>
             {/* Sky Gradient Layer */}
             <View style={styles.skyUpper} />
             <View style={styles.skyLower} />
@@ -65,6 +88,20 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
           </View>
         )}
 
+        {/* Live Selected Dazz Cam Color Filter Overlay over Viewfinder */}
+        <View
+          style={[styles.colorGradeOverlay, { backgroundColor: currentFilterObj.overlayColor }]}
+          pointerEvents="none"
+        />
+
+        {/* Dreamy Bloom / Soft Digicam Glow Overlays */}
+        {isDreamyGlow && (
+          <>
+            <View style={styles.dreamyBloomOverlay} pointerEvents="none" />
+            <View style={styles.softFocusOverlay} pointerEvents="none" />
+          </>
+        )}
+
         {/* Focus Frame Reticle */}
         <View style={styles.reticleWrapper}>
           <FocusFrame />
@@ -72,6 +109,7 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
 
         {/* Analog Grain Texture Overlay */}
         <GrainOverlay />
+
 
         {/* Viewfinder Text Overlays */}
         <View style={styles.overlayTopRow}>
@@ -85,14 +123,15 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
         </View>
 
         <View style={styles.overlayBottomRow}>
-          <Text style={styles.dateStampOverlay}>{getFormattedTodayStamp()}</Text>
-
           <View style={styles.facingBadge}>
             <PozIcon name="camera" size={10} color="#FFFDF6" />
             <Text style={styles.facingText}>
               {facing === 'back' ? 'ARKA' : 'ÖN'}
             </Text>
           </View>
+
+          {/* Red Digital Camera Date Stamp on Bottom Right ONLY */}
+          <Text style={styles.dateStampOverlay}>{getFormattedTodayStamp()}</Text>
         </View>
 
         {/* White Flash Effect Overlay on Shutter Press */}
@@ -232,4 +271,34 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#FFFDF6',
   },
+  colorGradeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  vignetteOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 16,
+    borderRadius: BorderRadius.sm,
+  },
+  dreamyBloomOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 245, 225, 0.08)',
+  },
+  dreamyLightLeak: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: 'rgba(255, 235, 190, 0.15)',
+    shadowColor: '#FFFDF6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 28,
+  },
+  softFocusOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
 });
+

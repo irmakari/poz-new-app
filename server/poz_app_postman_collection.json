@@ -1,0 +1,354 @@
+{
+  "info": {
+    "_postman_id": "poz-app-api-collection-2026",
+    "name": "Poz App REST API",
+    "description": "Poz App - Express Backend & Supabase REST API Postman Koleksiyonu",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Healthcheck",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (Kullanıcı Kaydı)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@pozapp.com\",\n  \"password\": \"123456\",\n  \"username\": \"analog_sever\",\n  \"full_name\": \"Analog Sever\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login (Giriş Yapma)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@pozapp.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout (Çıkış Yapma)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Films (Makaralar)",
+      "item": [
+        {
+          "name": "Get All Films",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/films",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "films"]
+            }
+          }
+        },
+        {
+          "name": "Create Film (Yeni Film Makarası)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"italya gezisi 2026\",\n  \"filmTypeName\": \"Summer Glow\",\n  \"filmTypeId\": \"ft-summer-glow\",\n  \"totalFrames\": 24,\n  \"iso\": 400,\n  \"colorToken\": \"#111827\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/films",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "films"]
+            }
+          }
+        },
+        {
+          "name": "Start Developing (Karanlık Oda Yıkamaya Gönder)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/films/summer-glow-july-2026/develop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "films", "summer-glow-july-2026", "develop"]
+            }
+          }
+        },
+        {
+          "name": "Archive Film",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/films/summer-glow-july-2026/archive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "films", "summer-glow-july-2026", "archive"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Photos (Pozlar)",
+      "item": [
+        {
+          "name": "Get All Photos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/photos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "photos"]
+            }
+          }
+        },
+        {
+          "name": "Upload / Save Photo Frame",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "filmId",
+                  "value": "summer-glow-july-2026",
+                  "type": "text"
+                },
+                {
+                  "key": "captureMode",
+                  "value": "film",
+                  "type": "text"
+                },
+                {
+                  "key": "note",
+                  "value": "kadıköy'de gün batımı harikaydı",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "Kadıköy, İstanbul",
+                  "type": "text"
+                },
+                {
+                  "key": "mood",
+                  "value": "huzurlu",
+                  "type": "text"
+                },
+                {
+                  "key": "song",
+                  "value": "{\"title\":\"Seni Dert Etmeler\",\"artist\":\"Madrigal\"}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/photos/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "photos", "upload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Music (Şarkı Arama API)",
+      "item": [
+        {
+          "name": "Search Songs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/music/search?q=mabel matiz",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "music", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "mabel matiz"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Daily Notes (Günlük Notlar)",
+      "item": [
+        {
+          "name": "Get Daily Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes"]
+            }
+          }
+        },
+        {
+          "name": "Save Daily Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateKey\": \"2026-07-27\",\n  \"note\": \"bugün kadıköyde harika bir gün geçirdik\",\n  \"mood\": \"mutlu\",\n  \"location\": \"Kadıköy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
