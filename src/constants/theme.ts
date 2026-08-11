@@ -28,36 +28,50 @@ export const Colors = {
   border: 'rgba(15, 23, 42, 0.1)',
   shadow: 'rgba(15, 23, 42, 0.08)',
 
-  // Lacivert & Mavi (Navy & Royal Blue Palette)
+  // 1. Lacivert & Mavi Tonları (Deep Navy & Royal Blue Palette)
   navy: '#0F172A',
   deepNavy: '#1E293B',
   blue: '#1E3A8A',
-  blueDark: '#2563EB',
+  royalBlue: '#2563EB',
+  cobaltBlue: '#1D4ED8',
   filmBlue: '#2563EB',
   mutedBlue: '#3B82F6',
 
-  // Bordo & Derin Kırmızı (Burgundy Palette)
-  burgundy: '#6B1D2F',
-  darkRed: '#881337',
-  pink: '#6B1D2F', // Bordo ana butonlar ve aksanlar
-  pinkDark: '#881337', // Koyu Bordo vurgu
-  stampRed: '#9F1239',
-
-  // Mor & Mürdüm (Purple & Indigo Palette)
-  purple: '#4C1D95',
-  deepPurple: '#3B0764',
-  plum: '#581C87',
+  // 2. Mürdüm & Mor Tonları (Plum, Violet & Deep Purple)
+  plum: '#581C87', // Mürdüm
+  deepPlum: '#3B0764',
+  purple: '#6B21A8',
+  indigo: '#4338CA',
+  violet: '#7C3AED',
+  lavender: '#8B5CF6',
   dustyPurple: '#6366F1',
-  lavender: '#4C1D95',
-  lavenderDark: '#6366F1',
 
-  // Yeşil (Forest & Emerald Green Palette)
+  // 3. Haki & Zeytin Tonları (Khaki, Olive & Sage)
+  khaki: '#3F4E34', // Haki
+  olive: '#4D5D3B',
+  sageGreen: '#5A6B4C',
+  mossGreen: '#2D3B25',
   green: '#14532D',
   greenDark: '#166534',
-  olive: '#15803D',
   mutedGreen: '#22543D',
 
-  // Nötr & Diğer Törler
+  // 4. Bordo & Pembe Tonları (Burgundy, Crimson & Rose Pink)
+  burgundy: '#6B1D2F', // Bordo
+  darkBurgundy: '#4C1220',
+  darkRed: '#881337',
+  pink: '#E11D48', // Pembe / Gül Pembesi
+  pinkDark: '#9F1239',
+  softPink: '#F43F5E',
+  stampRed: '#9F1239',
+
+  // 5. Gümüş & Krom Metalik Tonları (Silver & Metallic Platinum)
+  silver: '#94A3B8', // Gümüş
+  silverLight: '#E2E8F0',
+  silverDark: '#64748B',
+  platinum: '#CBD5E1',
+  chromeMetal: '#475569',
+
+  // Nötr & Diğer Tonlar
   brown: '#3A261F',
   deepBrown: '#241713',
   mustard: '#B45309',
@@ -69,9 +83,10 @@ export const Colors = {
 
   // Washi Tapes
   tapeDefault: 'rgba(30, 58, 138, 0.15)',
-  tapeLavender: 'rgba(76, 29, 149, 0.15)',
-  tapePink: 'rgba(107, 29, 47, 0.15)',
+  tapeLavender: 'rgba(88, 28, 135, 0.15)',
+  tapePink: 'rgba(225, 29, 72, 0.15)',
   tapeBlue: 'rgba(37, 99, 235, 0.15)',
+  tapeSilver: 'rgba(148, 163, 184, 0.2)',
 
   // Tab Bar Theme (Lacivert & Mavi Vurgu)
   tabBarBg: '#0F172A', // Derin Lacivert floating capsule

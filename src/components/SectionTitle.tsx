@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ViewStyle, TouchableOpacity } from 'react-nativ
 import { Colors, Fonts, Spacing } from '@/constants/theme';
 import { PaperStamp } from './PaperStamp';
 
+
 interface SectionTitleProps {
   title: string;
   categoryLabel?: string;
@@ -22,7 +23,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   actionLabel,
   onPressAction,
   style,
-  isStampedTitle = true,
+  isStampedTitle = false,
 }) => {
   const defaultCategory = categoryLabel || 'ARCHIVE LOG';
 
@@ -41,7 +42,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
           )}
         </View>
 
-        {/* Main Title Row with Framed Stamp UI */}
+        {/* Clean Plain Title Row */}
         <View style={styles.titleRow}>
           {isStampedTitle ? (
             <View style={styles.stampedTitleBadge}>

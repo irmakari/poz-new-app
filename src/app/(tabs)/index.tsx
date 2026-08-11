@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 const HOME_MOOD_OPTIONS = ['huzurlu', 'mutlu', 'coşkulu', 'sakin', 'taze', 'yorgun', 'özlemli', 'heyecanlı'];
 
 export default function HomeScreen() {
@@ -44,6 +45,12 @@ export default function HomeScreen() {
 
   const dailyCount = todayDailyPhotos.length;
   const filmCount = todayFilmPhotos.length;
+
+  const currentFrames = activeFilm ? (activeFilm.currentFrames ?? activeFilm.frameCount ?? 12) : 12;
+  const totalFrames = activeFilm ? (activeFilm.totalFrames ?? 36) : 36;
+  const remainingFrames = activeFilm ? activeFilm.remainingFrames : 24;
+  const filmTitle = activeFilm ? (activeFilm.name || activeFilm.title) : 'summer glow 400';
+  const isoTag = activeFilm ? `35MM ISO ${activeFilm.iso || 400}` : '35MM ISO 400';
   const totalPhotosCount = dailyCount + filmCount;
 
   // Modal States for Cards
@@ -71,12 +78,6 @@ export default function HomeScreen() {
       },
     ]);
   };
-
-  const currentFrames = activeFilm ? activeFilm.currentFrames : 12;
-  const totalFrames = activeFilm ? activeFilm.totalFrames : 36;
-  const remainingFrames = activeFilm ? activeFilm.remainingFrames : 24;
-  const filmTitle = activeFilm ? activeFilm.title : 'summer glow';
-  const isoTag = activeFilm ? activeFilm.isoTag : '35MM ISO 400';
 
   return (
     <SafeAreaView style={styles.safeArea}>
