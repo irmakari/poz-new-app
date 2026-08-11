@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -49,6 +49,13 @@ export default function DailyCaptureReviewScreen() {
 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>((paramFilter as FilterType) || 'dazz-green');
   const [isDreamyGlow, setIsDreamyGlow] = useState(paramGlow !== '0');
+
+  useEffect(() => {
+    if (paramFilter) {
+      setSelectedFilter(paramFilter as FilterType);
+    }
+  }, [paramFilter]);
+
   const currentFilterObj = FILTERS.find((f) => f.id === selectedFilter) || FILTERS[0];
 
   let containerAspectRatio = 1.4;
@@ -159,7 +166,7 @@ export default function DailyCaptureReviewScreen() {
           <View style={styles.photoPrintCard}>
             <TapeDecoration position="top-left" width={42} height={12} color={Colors.tapePink} />
 
-            <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.95 }}>
+            <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.95 }} style={{ width: '100%', overflow: 'hidden', borderRadius: 0, backgroundColor: '#000000' }}>
               <View style={[styles.photoContainer, { aspectRatio: containerAspectRatio }]}>
                 {photoUri ? (
                   <Image source={{ uri: photoUri }} style={styles.photoImage} resizeMode="cover" />
@@ -173,11 +180,16 @@ export default function DailyCaptureReviewScreen() {
                   pointerEvents="none"
                 />
 
+                {/* Digicam Soft Dreamy Bloom Glow Overlay */}
+                {isDreamyGlow && (
+                  <View style={styles.dreamyBloomOverlay} pointerEvents="none" />
+                )}
+
                 <GrainOverlay />
 
-                {/* Red Camera Date Stamp (Bottom Right ONLY) */}
+                {/* Bright Silver Camera Date Stamp with 5-Pointed Star Accent */}
                 <View style={styles.dateStampBadge}>
-                  <Text style={styles.dateStampText}>{getFormattedTodayStamp()}</Text>
+                  <Text style={styles.dateStampText}>{getFormattedTodayStamp()} ★</Text>
                 </View>
               </View>
             </ViewShot>
@@ -353,19 +365,22 @@ const styles = StyleSheet.create({
   },
   dateStampBadge: {
     position: 'absolute',
-    bottom: 12,
-    right: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
   dateStampText: {
-    color: '#E54848',
-    fontSize: 11,
+    color: '#E2E8F0',
+    fontSize: 9.5,
     fontFamily: Fonts.mono,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(255, 255, 255, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
   vignetteOverlay: {
     ...StyleSheet.absoluteFillObject,

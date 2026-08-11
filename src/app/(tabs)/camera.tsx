@@ -2,7 +2,7 @@ import { CameraHeader } from '@/components/CameraHeader';
 import { CaptureModeSelector } from '@/components/CaptureModeSelector';
 import { CaptureOverlay } from '@/components/CaptureOverlay';
 import { FilmInfoLabel } from '@/components/FilmInfoLabel';
-import { CameraFacing, FlashState, MockViewfinder } from '@/components/MockViewfinder';
+import { CameraFacing, FlashState, MockViewfinder, ViewfinderMode } from '@/components/MockViewfinder';
 import { PozIcon } from '@/components/PozIcon';
 import { ShutterButton } from '@/components/ShutterButton';
 import { BorderRadius, Colors, Fonts, Spacing } from '@/constants/theme';
@@ -15,6 +15,7 @@ import {
   Alert,
   Animated,
   Linking,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,11 +50,14 @@ export default function CameraScreen() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
+  // Modal State for Settings
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
   // Animated Values
   const flashAnimOpacity = useRef(new Animated.Value(0)).current;
   const toastAnimOpacity = useRef(new Animated.Value(0)).current;
 
-  // Flash Toggle Handler
+  // Handlers
   const handleToggleFlash = () => {
     setFlashState((prev) => {
       if (prev === 'auto') return 'on';
@@ -62,294 +66,192 @@ export default function CameraScreen() {
     });
   };
 
-  // Camera Flip Handler
   const handleFlipCamera = () => {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
   };
 
-  // 3-Way Viewfinder Size Toggle Handler (Compact 35mm -> Cinematic Ultra-wide -> Expanded Dazz 3:4)
-  const handleToggleViewfinderMode = () => {
-    setViewfinderMode((prev) => {
-      if (prev === 'compact') return 'cinematic';
-      if (prev === 'cinematic') return 'expanded';
-      return 'compact';
-    });
-  };
-
-  const getViewfinderText = () => {
-    if (viewfinderMode === 'compact') return '🎞️ 35MM YAYVAN';
-    if (viewfinderMode === 'cinematic') return '🎬 ULTRA GENİŞ (SİNEMATİK)';
-    return '🔍 DAZZ PORTRE (3:4)';
-  };
-
-  // Mirror Effect Toggle Handler
   const handleToggleMirror = () => {
     setIsMirrored((prev) => !prev);
   };
 
-  // Dreamy Glow Bloom Toggle Handler
   const handleToggleDreamyGlow = () => {
     setIsDreamyGlow((prev) => !prev);
   };
 
+  const handleToggleViewfinderMode = (mode: ViewfinderMode) => {
+    setViewfinderMode(mode);
+  };
 
-  // Shutter Press Handler (Dual Mode)
+  const triggerFlashAnimation = () => {
+    flashAnimOpacity.setValue(1);
+    Animated.timing(flashAnimOpacity, {
+      toValue: 0,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const triggerToastAnimation = () => {
+    toastAnimOpacity.setValue(1);
+    Animated.timing(toastAnimOpacity, {
+      toValue: 0,
+      duration: 2200,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const handleShutterPress = async () => {
     if (isCapturing) return;
-    setIsCapturing(true);
+
+    if (currentCaptureMode === 'film' && remainingFrames <= 0) {
+      Alert.alert(
+        'Film Rulosu Doldu! 🎞️',
+        'Bu filmdeki tüm pozları çektin! Banyoya gönderebilir ya da yeni bir film rulosu takabilirsin.',
+        [
+          { text: 'Tamam', style: 'cancel' },
+          {
+            text: 'Rulolara Git',
+            onPress: () => router.push('/(tabs)/films'),
+          },
+        ]
+      );
+      return;
+    }
 
     try {
-      // 1. Take picture using real camera view (görüntünün çektikten sonra dönmemesi için tam uyum)
-      const shouldMirror = facing === 'front' ? !isMirrored : isMirrored;
-      const photo = await cameraRef.current?.takePictureAsync({
-        quality: 0.85,
-        mirror: shouldMirror,
-      });
-      if (!photo?.uri) {
-        throw new Error('Fotoğraf çekilemedi');
+      setIsCapturing(true);
+
+      if (flashState !== 'off') {
+        triggerFlashAnimation();
       }
 
-      // 2. Viewfinder White Flash Animation
-      Animated.sequence([
-        Animated.timing(flashAnimOpacity, {
-          toValue: 0.9,
-          duration: 80,
-          useNativeDriver: true,
-        }),
-        Animated.timing(flashAnimOpacity, {
-          toValue: 0,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      let photoUri = '';
+      if (cameraRef.current) {
+        const shouldMirror = facing === 'front' ? !isMirrored : isMirrored;
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.85,
+          skipProcessing: false,
+          mirror: shouldMirror,
+        });
 
-      // 3. Show Capture Toast Feedback
-      setOverlayVisible(true);
-      Animated.sequence([
-        Animated.timing(toastAnimOpacity, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.delay(500),
-        Animated.timing(toastAnimOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setOverlayVisible(false);
-      });
+        if (photo?.uri) {
+          photoUri = photo.uri;
+        }
+      }
 
-      // 4. Navigate according to current capture mode
-      setTimeout(() => {
-        setIsCapturing(false);
-        if (currentCaptureMode === 'daily') {
+      triggerToastAnimation();
+
+      if (currentCaptureMode === 'daily') {
+        setTimeout(() => {
+          setIsCapturing(false);
           router.push({
             pathname: '/daily-capture-review',
             params: {
-              photoUri: photo.uri,
-              capturedAt: new Date().toISOString(),
-              mode: 'daily',
+              photoUri: photoUri || undefined,
               viewfinderMode,
               selectedFilter,
               isDreamyGlow: isDreamyGlow ? '1' : '0',
             },
           });
-        } else {
+        }, 400);
+      } else {
+        setTimeout(() => {
+          setIsCapturing(false);
           router.push({
             pathname: '/capture-review',
             params: {
-              photoUri: photo.uri,
-              frame: String(capturedFrameNum),
-              filmId: activeFilm ? activeFilm.id : 'summer-glow-july-2026',
-              mode: 'film',
+              photoUri: photoUri || undefined,
               viewfinderMode,
               selectedFilter,
               isDreamyGlow: isDreamyGlow ? '1' : '0',
+              capturedFrameNum: capturedFrameNum.toString(),
             },
           });
-        }
-      }, 400);
-    } catch (error) {
+        }, 400);
+      }
+    } catch (err) {
+      console.warn('Error taking photo:', err);
       setIsCapturing(false);
-      Alert.alert(
-        'Fotoğraf Çekilemedi',
-        'Fotoğraf çekilirken bir sorun oluştu. Lütfen tekrar deneyin.'
-      );
+      Alert.alert('Çekim Hata', 'Fotoğraf çekilirken bir sorun oluştu. Lütfen tekrar deneyin.');
     }
   };
 
-  // 1. Loading State while permissions are being checked
+  const currentFilterObj = FILTERS.find((f) => f.id === selectedFilter) || FILTERS[0];
+
   if (!permission) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.centeredContainer]}>
         <ActivityIndicator size="large" color={Colors.yellow} />
-        <Text style={styles.loadingText}>Kamera izni kontrol ediliyor...</Text>
+        <Text style={styles.loadingText}>kamera izni kontrol ediliyor...</Text>
       </SafeAreaView>
     );
   }
 
-  // 2. Permission Not Granted State
   if (!permission.granted) {
-    const canAskAgain = permission.canAskAgain;
-
     return (
       <SafeAreaView style={[styles.safeArea, styles.centeredContainer]}>
         <View style={styles.permissionCard}>
           <View style={styles.permissionIconCircle}>
             <PozIcon name="camera" size={32} color={Colors.yellow} />
           </View>
-          <Text style={styles.permissionTitle}>kameraya erişmemiz gerekiyor</Text>
+          <Text style={styles.permissionTitle}>Kamera İzni Gerekli</Text>
           <Text style={styles.permissionDescription}>
-            {canAskAgain
-              ? 'analog karelerini çekebilmek için kamera izni vermelisin.'
-              : 'Kamera izni reddedildi. Analog karelerini çekebilmek için cihaz ayarlarından kameraya izin vermelisin.'}
+            Analog film deneyimi ve fotoğraf çekebilmek için uygulamanın kameraya erişmesine izin vermelisin.
           </Text>
-
           <TouchableOpacity
             activeOpacity={0.8}
+            onPress={async () => {
+              if (permission.canAskAgain) {
+                await requestPermission();
+              } else {
+                Linking.openSettings().catch(() => {
+                  Alert.alert('Hata', 'Ayarlar açılamadı. Lütfen Cihaz Ayarları > Gizlilik > Kamera menüsünden izin verin.');
+                });
+              }
+            }}
             style={styles.permissionButton}
-            onPress={canAskAgain ? requestPermission : () => Linking.openSettings()}
           >
-            <Text style={styles.permissionButtonText}>
-              {canAskAgain ? 'kamera izni ver' : 'ayarlara git'}
-            </Text>
+            <Text style={styles.permissionButtonText}>İzin Ver</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  // 3. Main Camera Screen
   return (
     <SafeAreaView style={styles.safeArea}>
       <CaptureOverlay
         visible={overlayVisible}
         frameNumber={capturedFrameNum}
-        opacityAnim={toastAnimOpacity}
+        onAnimationComplete={() => setOverlayVisible(false)}
+        flashAnimOpacity={flashAnimOpacity}
+        toastAnimOpacity={toastAnimOpacity}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {/* Dark Analog Camera Body Container */}
-        <View style={styles.cameraBodyCasing}>
-          {/* Top Screw Accents */}
-          <View style={styles.screwRow}>
-            <Text style={styles.screwText}>+</Text>
-            <Text style={styles.serialText}>POZ-35MM-OPTICS</Text>
-            <Text style={styles.screwText}>+</Text>
-          </View>
-
-          {/* Mode Selector Toggle: Günlük vs Film */}
+      {/* FIXED DAZZ CAM NON-SCROLLING VIEWPORT */}
+      <View style={styles.fixedScreenContainer}>
+        {/* Top Header Control Bar */}
+        <View style={styles.topControlHeader}>
           <CaptureModeSelector
             currentMode={currentCaptureMode}
             onSelectMode={selectCaptureMode}
           />
 
-          {/* Header Film & Frame Counter Bar */}
-          {currentCaptureMode === 'film' ? (
-            <CameraHeader
-              filmName={activeFilm ? (activeFilm.name || activeFilm.title) : 'film rulosu'}
-              filmType={activeFilm ? `${activeFilm.filmTypeName || '35MM'} · ISO ${activeFilm.iso || 400}` : '35MM · ISO 400'}
-              remainingFrames={remainingFrames}
-            />
-          ) : (
-            <View style={styles.dailyHeaderBar}>
-              <PozIcon name="photo" size={14} color={Colors.yellow} />
-              <Text style={styles.dailyHeaderText}>bugünün fotoğrafı • çek, hemen gör</Text>
-            </View>
-          )}
-
-          {/* Dazz Cam Live Film Stock Filter Selector */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
-            <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 4 }}>
-              {FILTERS.map((f) => {
-                const isActive = selectedFilter === f.id;
-                return (
-                  <TouchableOpacity
-                    key={f.id}
-                    onPress={() => setSelectedFilter(f.id)}
-                    style={[
-                      styles.filterSelectPill,
-                      isActive && styles.filterSelectPillActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.filterSelectText,
-                        isActive && styles.filterSelectTextActive,
-                      ]}
-                    >
-                      {f.badge}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
-
-          {/* Dazz Cam Style Viewfinder Mode, Mirror & Dreamy Glow Toolbar */}
-          <View style={styles.viewfinderToolBar}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleToggleViewfinderMode}
-              style={[
-                styles.viewfinderToolPill,
-                viewfinderMode === 'expanded' && styles.viewfinderToolPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.viewfinderToolText,
-                  viewfinderMode !== 'compact' && styles.viewfinderToolTextActive,
-                ]}
-              >
-                {getViewfinderText()}
+          <View style={styles.topQuickButtons}>
+            <TouchableOpacity onPress={() => setIsSettingsModalOpen(true)} style={styles.quickSettingsPill}>
+              <Text style={styles.quickSettingsText}>
+                {viewfinderMode === 'compact' ? '🎞️ 1.4' : viewfinderMode === 'cinematic' ? '🎬 1.85' : '🔍 3:4'} ▾
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleToggleMirror}
-              style={[
-                styles.viewfinderToolPill,
-                isMirrored && styles.viewfinderToolPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.viewfinderToolText,
-                  isMirrored && styles.viewfinderToolTextActive,
-                ]}
-              >
-                {isMirrored ? '🪞 AYNA ✓' : '🪞 AYNA'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleToggleDreamyGlow}
-              style={[
-                styles.viewfinderToolPill,
-                isDreamyGlow && styles.viewfinderToolPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.viewfinderToolText,
-                  isDreamyGlow && styles.viewfinderToolTextActive,
-                ]}
-              >
-                {isDreamyGlow ? '✨ RÜYA BLOOM ✓' : '✨ RÜYA BLOOM'}
-              </Text>
+            <TouchableOpacity onPress={handleToggleMirror} style={[styles.quickIconBtn, isMirrored && styles.quickIconBtnActive]}>
+              <Text style={{ fontSize: 11, color: isMirrored ? Colors.yellowDark : '#FFFDF6' }}>🪞</Text>
             </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Viewfinder Window with Real CameraView when focused */}
+        {/* Center Viewfinder Container */}
+        <View style={styles.viewfinderCenterWrapper}>
           <MockViewfinder
             cameraRef={cameraRef}
             isFocused={isFocused}
@@ -362,117 +264,163 @@ export default function CameraScreen() {
             isDreamyGlow={isDreamyGlow}
           />
 
+        {/* Mode Info Badge Under Viewfinder */}
+        <View style={styles.infoBannerRow}>
+          <Text style={styles.infoBannerText}>
+            {currentCaptureMode === 'film'
+              ? `${activeFilm ? (activeFilm.name || activeFilm.title) : 'summer glow 400'} • ${remainingFrames} poz kaldı`
+              : 'günlük mod • çek, albüme kaydet'}
+          </Text>
+        </View>
+      </View>
 
-          {/* Mode Info Label Under Viewfinder */}
-          {currentCaptureMode === 'film' ? (
-            <>
-              <FilmInfoLabel
-                filmName={activeFilm ? (activeFilm.name || activeFilm.title) : 'film rulosu'}
-                frameCount={activeFilm ? (activeFilm.currentFrames ?? activeFilm.capturedFrames ?? ((activeFilm.totalFrames || 36) - remainingFrames)) : 0}
-                totalFrames={activeFilm?.totalFrames || 36}
-                dateLabel={activeFilm?.dateLabel || 'temmuz 2026'}
-                serial={activeFilm?.serial || `POZ-${(activeFilm?.filmTypeName || 'FM').slice(0, 2).toUpperCase()}`}
-                remainingFrames={remainingFrames}
-              />
+        {/* Prominent Kadraj Boyutu (35mm / Sinematik / 3:4) & Bloom Toolbar Bar */}
+        <View style={styles.aspectRatioToolBar}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              setViewfinderMode((prev) => {
+                if (prev === 'compact') return 'cinematic';
+                if (prev === 'cinematic') return 'expanded';
+                return 'compact';
+              });
+            }}
+            style={styles.aspectRatioPillBtn}
+          >
+            <Text style={styles.aspectRatioPillText}>
+              BOYUT: {viewfinderMode === 'compact' ? '🎞️ 35MM (1.4)' : viewfinderMode === 'cinematic' ? '🎬 SİNEMATİK (1.85)' : '🔍 DAZZ PORTRE (3:4)'} 🔄
+            </Text>
+          </TouchableOpacity>
 
-              {/* Active Film Roll Selector if multiple films */}
-              {activeFilmsList.length > 1 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 6 }}>
-                  <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 4 }}>
-                    {activeFilmsList.map((f) => (
-                      <TouchableOpacity
-                        key={f.id}
-                        onPress={() => setActiveFilm(f.id)}
-                        style={{
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 4,
-                          backgroundColor: f.id === activeFilm?.id ? Colors.lavender : '#2A2436',
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 10,
-                            fontFamily: Fonts.mono,
-                            color: f.id === activeFilm?.id ? '#181520' : '#FFFDF6',
-                            fontWeight: '700',
-                          }}
-                        >
-                          {f.title} ({f.totalFrames - (f.currentFrames || 0)})
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </>
-          ) : (
-            <View style={styles.dailyInfoBox}>
-              <Text style={styles.dailyInfoText}>günlük mod • fotoğraf anında fotoğraf albümüne eklenir</Text>
-            </View>
-          )}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleToggleDreamyGlow}
+            style={[styles.bloomPillBtn, isDreamyGlow && styles.bloomPillBtnActive]}
+          >
+            <Text style={[styles.bloomPillText, isDreamyGlow && styles.bloomPillTextActive]}>
+              {isDreamyGlow ? '✨ BLOOM ✓' : '✨ BLOOM'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Camera Controls Bar */}
-          <View style={styles.controlsRow}>
+        {/* Fixed Dazz Cam Bottom Controls Deck */}
+        <View style={styles.cameraBottomDeck}>
+          {/* Main Shutter & Controls Row (Flash, Shutter, Front/Back Camera Flip) */}
+          <View style={styles.shutterControlsRow}>
             {/* Flash Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              accessibilityLabel="flaşı değiştir"
-              accessibilityHint="Otomatik, açık veya kapalı flaş modları arasında geçiş yapar"
-              onPress={handleToggleFlash}
-              style={[
-                styles.controlButton,
-                { backgroundColor: flashState === 'off' ? '#2A2436' : Colors.yellow },
-              ]}
-            >
-              <PozIcon
-                name="star"
-                size={18}
-                color={flashState === 'off' ? 'rgba(255, 255, 255, 0.5)' : Colors.yellowDark}
-              />
-              <Text
-                style={[
-                  styles.controlButtonText,
-                  { color: flashState === 'off' ? '#FFFDF6' : Colors.yellowDark },
-                ]}
-              >
-                {flashState.toUpperCase()}
-              </Text>
+            <TouchableOpacity onPress={handleToggleFlash} style={styles.deckControlSquare}>
+              <PozIcon name="star" size={18} color={flashState === 'off' ? 'rgba(255, 255, 255, 0.4)' : Colors.yellow} />
+              <Text style={styles.deckControlLabel}>{flashState.toUpperCase()}</Text>
             </TouchableOpacity>
 
-            {/* Shutter Button (Center) */}
-            <ShutterButton onPress={handleShutterPress} disabled={isCapturing} />
+            {/* BIG CENTER SHUTTER BUTTON */}
+            <View style={styles.shutterCenterWrapper}>
+              <ShutterButton onPress={handleShutterPress} disabled={isCapturing} />
+            </View>
 
-            {/* Flip Camera Button */}
+            {/* PROMINENT FRONT / BACK CAMERA FLIP BUTTON */}
             <TouchableOpacity
-              activeOpacity={0.8}
-              accessibilityLabel="kamerayı çevir"
-              accessibilityHint="Ön ve arka kamera arasında geçiş yapar"
               onPress={handleFlipCamera}
-              style={[styles.controlButton, { backgroundColor: Colors.lavender }]}
+              style={[styles.deckControlSquare, facing === 'front' && styles.deckControlSquareActive]}
             >
-              <PozIcon name="camera" size={18} color={Colors.lavenderDark} />
-              <Text style={[styles.controlButtonText, { color: Colors.lavenderDark }]}>
-                {facing === 'back' ? 'ARKA' : 'ÖN'}
+              <PozIcon name="rotate" size={20} color={facing === 'front' ? Colors.yellowDark : '#FFFDF6'} />
+              <Text style={[styles.deckControlLabel, facing === 'front' && { color: Colors.yellowDark, fontWeight: '900' }]}>
+                {facing === 'front' ? 'ÖN' : 'ARKA'}
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Bottom Information Subtext */}
-          <View style={styles.bottomInfoGroup}>
-            <Text style={styles.analogNoticeText}>
-              çektiğin kareyi banyo kilitlidir.
-            </Text>
-            <Text style={styles.testHintBadgeText}>
-              ✨ Fotoğrafı çektikten sonra karttaki "Efekt Testi" sekmesinden 35mm filtre sonuçlarını canlı deneyebilirsin!
-            </Text>
-
-            <Text style={styles.remainingCounterSubtext}>
-              {remainingFrames} kare kaldı.
-            </Text>
+          {/* COLORFUL DAZZ CAM CAMERAS SCROLL ROW UNDER SHUTTER BUTTON */}
+          <View style={styles.cameraModelsSection}>
+            <Text style={styles.cameraModelSectionTitle}>DAZZ CAM KAFASI / FİLM MODELLERİ</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4 }}>
+              {FILTERS.map((f) => {
+                const isSelected = selectedFilter === f.id;
+                return (
+                  <TouchableOpacity
+                    key={f.id}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedFilter(f.id)}
+                    style={[
+                      styles.cameraModelCard,
+                      isSelected && styles.cameraModelCardActive,
+                    ]}
+                  >
+                    <View style={[styles.cameraIconBox, { backgroundColor: f.color || '#0E4A3B' }]}>
+                      <Text style={{ fontSize: 13 }}>📷</Text>
+                    </View>
+                    <Text style={[styles.cameraModelName, isSelected && styles.cameraModelNameActive]}>
+                      {f.badge}
+                    </Text>
+                    {isSelected && <View style={styles.activeDot} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </View>
-      </ScrollView>
+      </View>
+
+      {/* Kadraj & Bloom Settings Modal Sheet */}
+      <Modal visible={isSettingsModalOpen} transparent animationType="slide">
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setIsSettingsModalOpen(false)}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContentSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.modalTitleText}>KADRAJ BOYUTU & RÜYA BLOOM</Text>
+
+            <Text style={styles.sectionSubTitle}>1. Kadraj Oranı Seçimi:</Text>
+            <View style={styles.modeOptionRow}>
+              <TouchableOpacity
+                onPress={() => handleToggleViewfinderMode('compact')}
+                style={[styles.modeOptionBtn, viewfinderMode === 'compact' && styles.modeOptionBtnActive]}
+              >
+                <Text style={[styles.modeOptionText, viewfinderMode === 'compact' && styles.modeOptionTextActive]}>
+                  🎞️ 35MM YAYVAN (1.4)
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleToggleViewfinderMode('cinematic')}
+                style={[styles.modeOptionBtn, viewfinderMode === 'cinematic' && styles.modeOptionBtnActive]}
+              >
+                <Text style={[styles.modeOptionText, viewfinderMode === 'cinematic' && styles.modeOptionTextActive]}>
+                  🎬 ULTRA GENİŞ (1.85)
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleToggleViewfinderMode('expanded')}
+                style={[styles.modeOptionBtn, viewfinderMode === 'expanded' && styles.modeOptionBtnActive]}
+              >
+                <Text style={[styles.modeOptionText, viewfinderMode === 'expanded' && styles.modeOptionTextActive]}>
+                  🔍 DAZZ PORTRE (3:4)
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.sectionSubTitle, { marginTop: 16 }]}>2. Digicam Rüya Bloom:</Text>
+            <TouchableOpacity
+              onPress={handleToggleDreamyGlow}
+              style={[styles.bloomToggleBtn, isDreamyGlow && styles.bloomToggleBtnActive]}
+            >
+              <Text style={[styles.bloomToggleText, isDreamyGlow && styles.bloomToggleTextActive]}>
+                {isDreamyGlow ? '✨ Rüya Bloom (AÇIK ✓)' : '✨ Rüya Bloom (KAPALI)'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setIsSettingsModalOpen(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseText}>Kapat</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -480,7 +428,7 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#16131F', // Dark plum camera body theme
+    backgroundColor: '#16131F',
   },
   centeredContainer: {
     justifyContent: 'center',
@@ -501,11 +449,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
   },
   permissionIconCircle: {
     width: 64,
@@ -522,7 +465,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFDF6',
     marginTop: Spacing.sm,
-    textAlign: 'center',
   },
   permissionDescription: {
     fontFamily: Fonts.sans,
@@ -530,7 +472,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: Spacing.xs,
     textAlign: 'center',
-    lineHeight: 18,
   },
   permissionButton: {
     marginTop: Spacing.lg,
@@ -538,8 +479,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
     width: '100%',
+    alignItems: 'center',
   },
   permissionButtonText: {
     fontFamily: Fonts.sans,
@@ -547,174 +488,303 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.yellowDark,
   },
-  scrollContainer: {
+
+  // Fixed Non-Scrolling Layout
+  fixedScreenContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: 130, // Clearance for floating bottom tab bar
+    paddingBottom: 95, // Clearance for tab bar
   },
-  cameraBodyCasing: {
-    backgroundColor: '#1F1A2A',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  screwRow: {
+  topControlHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
-    paddingHorizontal: 4,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
-  screwText: {
-    fontFamily: Fonts.mono,
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.25)',
-    fontWeight: '800',
-  },
-  serialText: {
-    fontFamily: Fonts.mono,
-    fontSize: 8,
-    color: 'rgba(255, 255, 255, 0.35)',
-    letterSpacing: 1,
-  },
-  controlsRow: {
+  topQuickButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    marginVertical: Spacing.md,
+    gap: 6,
   },
-  controlButton: {
-    width: 68,
-    height: 52,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.15)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  controlButtonText: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  bottomInfoGroup: {
-    alignItems: 'center',
-    marginTop: 4,
-    gap: 4,
-  },
-  analogNoticeText: {
-    fontSize: 12,
-    fontFamily: Fonts.sans,
-    color: 'rgba(255, 255, 255, 0.65)',
-    textAlign: 'center',
-  },
-  testHintBadgeText: {
-    fontSize: 10,
-    fontFamily: Fonts.mono,
-    color: Colors.yellow,
-    opacity: 0.85,
-    marginTop: 2,
-  },
-  dailyHeaderBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2A2436',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: BorderRadius.sm,
-    marginVertical: Spacing.xs,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  dailyHeaderText: {
-    fontSize: 11,
-    fontFamily: Fonts.mono,
-    color: '#FFF1B0',
-    fontWeight: '700',
-  },
-  dailyInfoBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    marginVertical: 4,
-  },
-  dailyInfoText: {
-    fontSize: 11,
-    fontFamily: Fonts.mono,
-    color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-  },
-  remainingCounterSubtext: {
-    fontSize: 11,
-    fontFamily: Fonts.mono,
-    color: Colors.yellow,
-    fontWeight: '700',
-  },
-  viewfinderToolBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginVertical: 6,
-  },
-  viewfinderToolPill: {
+  quickSettingsPill: {
     backgroundColor: '#2A2436',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: BorderRadius.sm,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  viewfinderToolPillActive: {
-    backgroundColor: Colors.yellow,
-    borderColor: Colors.yellowDark,
-  },
-  viewfinderToolText: {
+  quickSettingsText: {
     fontSize: 10,
     fontFamily: Fonts.mono,
     color: '#FFFDF6',
     fontWeight: '700',
   },
-  viewfinderToolTextActive: {
-    color: Colors.yellowDark,
-    fontWeight: '900',
+  quickIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2A2436',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  filterSelectPill: {
+  quickIconBtnActive: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+
+  // Center Viewfinder Wrapper
+  viewfinderCenterWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoBannerRow: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  infoBannerText: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '700',
+  },
+  aspectRatioToolBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginVertical: 4,
+  },
+  aspectRatioPillBtn: {
+    backgroundColor: '#2A2436',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  aspectRatioPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '800',
+  },
+  bloomPillBtn: {
     backgroundColor: '#2A2436',
     paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  bloomPillBtnActive: {
+    backgroundColor: Colors.lavender,
+    borderColor: Colors.lavenderDark,
+  },
+  bloomPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '800',
+  },
+  bloomPillTextActive: {
+    color: '#FFFDF6',
+  },
+
+  // Camera Bottom Deck
+  cameraBottomDeck: {
+    backgroundColor: '#1E1928',
+    borderRadius: BorderRadius.lg,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    gap: 10,
+  },
+  shutterControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  deckControlSquare: {
+    width: 58,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: '#2A2436',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  deckControlSquareActive: {
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.yellowDark,
+  },
+  deckControlLabel: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '700',
+  },
+  shutterCenterWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Camera Models Scroll Section (Under Shutter)
+  cameraModelsSection: {
+    marginTop: 2,
+  },
+  cameraModelSectionTitle: {
+    fontSize: 8,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  cameraModelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2A2436',
+    paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
-  filterSelectPillActive: {
+  cameraModelCardActive: {
+    backgroundColor: '#372E47',
+    borderColor: Colors.yellow,
+  },
+  cameraIconBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraModelName: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '700',
+  },
+  cameraModelNameActive: {
+    color: '#FFFDF6',
+    fontWeight: '900',
+  },
+  activeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.yellow,
+  },
+
+  // Modal Sheets
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  modalContentSheet: {
+    backgroundColor: '#1F1A2A',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitleText: {
+    fontFamily: Fonts.mono,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFDF6',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  sectionSubTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 8,
+  },
+  modeOptionRow: {
+    gap: 8,
+  },
+  modeOptionBtn: {
+    backgroundColor: '#2A2436',
+    padding: 12,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modeOptionBtnActive: {
     backgroundColor: Colors.yellow,
     borderColor: Colors.yellowDark,
   },
-  filterSelectText: {
-    fontSize: 10,
+  modeOptionText: {
+    fontSize: 12,
     fontFamily: Fonts.mono,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#FFFDF6',
     fontWeight: '700',
   },
-  filterSelectTextActive: {
+  modeOptionTextActive: {
     color: Colors.yellowDark,
     fontWeight: '900',
   },
+  bloomToggleBtn: {
+    backgroundColor: '#2A2436',
+    padding: 12,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+  },
+  bloomToggleBtnActive: {
+    backgroundColor: Colors.lavender,
+    borderColor: Colors.lavenderDark,
+  },
+  bloomToggleText: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '700',
+  },
+  bloomToggleTextActive: {
+    color: '#FFFDF6',
+    fontWeight: '900',
+  },
+  modalCloseButton: {
+    marginTop: 20,
+    backgroundColor: '#2A2436',
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    color: '#FFFDF6',
+    fontWeight: '700',
+  },
 });
-

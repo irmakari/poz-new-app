@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
@@ -23,6 +23,7 @@ interface HiddenFrameCardProps {
   isTestModeInitial?: boolean;
   viewfinderMode?: string;
   selectedFilter?: string;
+  isDreamyGlow?: boolean;
 }
 
 export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
@@ -35,6 +36,7 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
   isTestModeInitial = true,
   viewfinderMode = 'compact',
   selectedFilter = 'dazz-green',
+  isDreamyGlow = true,
 }) => {
   const [isTestMode, setIsTestMode] = useState(isTestModeInitial);
   const [selectedFilterState, setSelectedFilterState] = useState<FilterType>(
@@ -42,6 +44,12 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
   );
   const [isSaving, setIsSaving] = useState(false);
   const viewShotRef = useRef<ViewShot>(null);
+
+  useEffect(() => {
+    if (selectedFilter) {
+      setSelectedFilterState(selectedFilter as FilterType);
+    }
+  }, [selectedFilter]);
 
   let containerAspectRatio = 1.4;
   if (viewfinderMode === 'expanded') {
@@ -149,7 +157,7 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
           </View>
         ) : (
           /* Live Effect Preview Mode Visual (Clean Photo + 35mm Filter + Red Date Stamp ONLY) */
-          <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.95 }}>
+          <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.95 }} style={{ width: '100%', overflow: 'hidden', borderRadius: 0, backgroundColor: '#000000' }}>
             <View style={[styles.effectPreviewVisual, { aspectRatio: containerAspectRatio }]}>
               {photoUri ? (
                 <Image source={{ uri: photoUri }} style={styles.previewImage} resizeMode="cover" />
@@ -163,12 +171,17 @@ export const HiddenFrameCard: React.FC<HiddenFrameCardProps> = ({
                 pointerEvents="none"
               />
 
+              {/* Digicam Soft Dreamy Bloom Glow Overlay */}
+              {isDreamyGlow && (
+                <View style={styles.dreamyBloomOverlay} pointerEvents="none" />
+              )}
+
               {/* Analog Grain Texture Overlay */}
               <GrainOverlay />
 
-              {/* Authentic Red Digital Date Stamp (90s Analog Camera Style) */}
+              {/* Authentic Bright Silver Date Stamp with 5-Pointed Star Accent */}
               <View style={styles.dateStampContainer} pointerEvents="none">
-                <Text style={styles.dateStampText}>{getFormattedTodayStamp()}</Text>
+                <Text style={styles.dateStampText}>{getFormattedTodayStamp()} ★</Text>
               </View>
             </View>
           </ViewShot>
@@ -365,21 +378,28 @@ const styles = StyleSheet.create({
   colorGradeOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
+  dreamyBloomOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 245, 220, 0.12)',
+  },
   dateStampContainer: {
     position: 'absolute',
     bottom: 8,
     right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 3,
   },
   dateStampText: {
     fontFamily: Fonts.mono,
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#FF4D4D',
-    letterSpacing: 1.5,
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#E2E8F0',
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(255, 255, 255, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
   filterSelectorContainer: {
     marginTop: 8,

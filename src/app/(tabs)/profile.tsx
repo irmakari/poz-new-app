@@ -5,13 +5,9 @@ import { Colors, Spacing } from '@/constants/theme';
 import { ProfileHeader } from '@/components/ProfileHeader';
 import { ProfileIdentityCard } from '@/components/ProfileIdentityCard';
 import { ProfileStatsGrid } from '@/components/ProfileStatsGrid';
-import { MemoryCollage } from '@/components/MemoryCollage';
-import { FilmIdentityLabels } from '@/components/FilmIdentityLabels';
 import { SettingsReceipt } from '@/components/SettingsReceipt';
 import { DefaultFilmModal } from '@/components/DefaultFilmModal';
-import { BackupEnvelope } from '@/components/BackupEnvelope';
 import { ExportOptionsModal } from '@/components/ExportOptionsModal';
-import { PrivacyReceipt } from '@/components/PrivacyReceipt';
 import { LogoutButton } from '@/components/LogoutButton';
 import { MOCK_PROFILE } from '@/utils/profileData';
 
@@ -38,14 +34,8 @@ export default function ProfileScreen() {
         {/* Profile Analog Member Pass Photo ID */}
         <ProfileIdentityCard profile={MOCK_PROFILE} />
 
-        {/* Small Statistics Physical Tags Grid */}
+        {/* Statistics Grid */}
         <ProfileStatsGrid stats={MOCK_PROFILE.stats} />
-
-        {/* Recent Memories Polaroid Collage */}
-        <MemoryCollage memories={MOCK_PROFILE.lastMemories} />
-
-        {/* Film Identity & Mood Color Test Strips */}
-        <FilmIdentityLabels identity={MOCK_PROFILE.identity} />
 
         {/* Preferences Photo Lab Receipt */}
         <SettingsReceipt
@@ -67,17 +57,11 @@ export default function ProfileScreen() {
           onSelectFilm={setSelectedDefaultFilm}
         />
 
-        {/* Backup & Archive Copy Envelope */}
-        <BackupEnvelope onOpenExportModal={() => setIsExportModalVisible(true)} />
-
         {/* Export Options Modal */}
         <ExportOptionsModal
           visible={isExportModalVisible}
           onClose={() => setIsExportModalVisible(false)}
         />
-
-        {/* Privacy & Account Settings Receipt */}
-        <PrivacyReceipt />
 
         {/* Logout Action Button */}
         <LogoutButton />

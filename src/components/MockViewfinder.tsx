@@ -130,8 +130,8 @@ export const MockViewfinder: React.FC<MockViewfinderProps> = ({
             </Text>
           </View>
 
-          {/* Red Digital Camera Date Stamp on Bottom Right ONLY */}
-          <Text style={styles.dateStampOverlay}>{getFormattedTodayStamp()}</Text>
+          {/* Bright Silver Camera Date Stamp with 5-Pointed Star Accent */}
+          <Text style={styles.dateStampOverlay}>{getFormattedTodayStamp()} ★</Text>
         </View>
 
         {/* White Flash Effect Overlay on Shutter Press */}
@@ -247,10 +247,17 @@ const styles = StyleSheet.create({
   },
   dateStampOverlay: {
     fontFamily: Fonts.mono,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
-    color: '#E54848',
-    letterSpacing: 1,
+    color: '#E2E8F0',
+    letterSpacing: 0.8,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 3,
+    textShadowColor: 'rgba(255, 255, 255, 0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
   facingBadge: {
     flexDirection: 'row',

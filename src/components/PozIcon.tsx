@@ -21,7 +21,8 @@ export type PozIconName =
   | 'apple'
   | 'google'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'rotate';
 
 interface PozIconProps {
   name: PozIconName;
@@ -50,6 +51,7 @@ const SYMBOL_MAP: Record<PozIconName, string> = {
   google: 'g.circle.fill',
   eye: 'eye.fill',
   'eye-off': 'eye.slash.fill',
+  rotate: 'camera.rotate.fill',
 };
 
 const FALLBACK_MAP: Record<PozIconName, string> = {
@@ -72,6 +74,7 @@ const FALLBACK_MAP: Record<PozIconName, string> = {
   google: 'G',
   eye: '👁',
   'eye-off': '🙈',
+  rotate: '🔄',
 };
 
 export const PozIcon: React.FC<PozIconProps> = ({

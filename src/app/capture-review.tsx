@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,8 +26,8 @@ import { getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
 
 export default function CaptureReviewScreen() {
   const router = useRouter();
-  const { photoUri, frame = '1', filmId = 'summer-glow-july-2026', viewfinderMode = 'compact' } =
-    useLocalSearchParams<{ photoUri?: string; frame: string; filmId: string; viewfinderMode?: string }>();
+  const { photoUri, frame = '1', filmId = 'summer-glow-july-2026', viewfinderMode = 'compact', selectedFilter = 'dazz-green', isDreamyGlow: paramGlow = '1' } =
+    useLocalSearchParams<{ photoUri?: string; frame: string; filmId: string; viewfinderMode?: string; selectedFilter?: string; isDreamyGlow?: string }>();
 
   const { addPhotoFrame } = useApp();
 
@@ -96,6 +96,8 @@ export default function CaptureReviewScreen() {
             timeStr={getFormattedTime()}
             photoUri={photoUri}
             viewfinderMode={viewfinderMode}
+            selectedFilter={selectedFilter}
+            isDreamyGlow={paramGlow !== '0'}
           />
 
           {/* Quick Primary Save Action Button (1-Tap Save) */}
