@@ -1,14 +1,28 @@
 -- ─── POZ APP SUPABASE DATABASE SCHEMA ────────────────────────────────────────
 
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- 1. PROFILES TABLOSU
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
-  username TEXT,
+  username TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
+  bio TEXT,
+  password_hash TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Existing Supabase projects can rerun this file safely after pulling changes.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_username_unique_idx
+  ON public.profiles (username)
+  WHERE username IS NOT NULL;
 
 -- 2. FILMS TABLOSU (Analog Film Makaraları)
 CREATE TABLE IF NOT EXISTS public.films (
@@ -75,6 +89,11 @@ ALTER TABLE public.films ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_notes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow individual read/write profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow individual read/write films" ON public.films;
+DROP POLICY IF EXISTS "Allow individual read/write photos" ON public.photos;
+DROP POLICY IF EXISTS "Allow individual read/write daily_notes" ON public.daily_notes;
+
 -- Herkes kendi verisine tam erişebilir:
 CREATE POLICY "Allow individual read/write profiles" ON public.profiles FOR ALL USING (true);
 CREATE POLICY "Allow individual read/write films" ON public.films FOR ALL USING (true);
@@ -82,5 +101,8 @@ CREATE POLICY "Allow individual read/write photos" ON public.photos FOR ALL USIN
 CREATE POLICY "Allow individual read/write daily_notes" ON public.daily_notes FOR ALL USING (true);
 
 -- Storage bucket erişimi
+DROP POLICY IF EXISTS "Allow public read photos" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated upload photos" ON storage.objects;
+
 CREATE POLICY "Allow public read photos" ON storage.objects FOR SELECT USING (bucket_id = 'photos');
 CREATE POLICY "Allow authenticated upload photos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'photos');

@@ -20,40 +20,50 @@ export const MoodStickerGroup: React.FC<MoodStickerGroupProps> = ({
   monthName = 'temmuz',
 }) => {
   const topMood = moods[0]?.mood || 'huzurlu';
+  const totalDays = moods.reduce((sum, item) => sum + item.count, 0);
+  const leadMood = moods[0];
 
   return (
     <View style={styles.container}>
       <SectionTitle title={`${monthName} nasıl hissettirdi?`} stamp="MOOD TEST" />
 
-      {/* Sticker Tags Group */}
-      <View style={styles.stickersContainer}>
-        {moods.map((item, index) => {
-          const rotation = index % 2 === 0 ? '-2deg' : '2.2deg';
-          const isTop = index === 0;
-          return (
+      <View style={[styles.moodBoard, { backgroundColor: leadMood?.color || '#8C9BF6' }]}>
+        <Text style={styles.backdropText}>HİS</Text>
+
+        <View style={styles.boardHeader}>
+          <View style={styles.iconBubble}>
+            <PozIcon name="sparkle" size={18} color={Colors.text} />
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillText}>{totalDays} GÜN</Text>
+          </View>
+        </View>
+
+        <Text style={styles.boardLabel}>Baskın His</Text>
+        <Text style={styles.boardTitle} numberOfLines={1}>{topMood}</Text>
+        <Text style={styles.boardCopy} numberOfLines={2}>
+          bu filmin duygusu en çok burada toplanmış.
+        </Text>
+
+        <View style={styles.moodChips}>
+          {moods.map((item, index) => (
             <View
               key={item.mood}
               style={[
-                styles.stickerTag,
-                { backgroundColor: item.color, transform: [{ rotate: rotation }] },
-                isTop && styles.topStickerTag,
+                styles.moodChip,
+                index === 0 && styles.activeMoodChip,
               ]}
             >
-              <PozIcon name="sparkle" size={isTop ? 18 : 14} color={Colors.text} />
-              <Text style={[styles.stickerMoodText, isTop && styles.topStickerMoodText]}>
+              <Text style={[styles.moodChipLabel, index === 0 && styles.activeMoodChipLabel]} numberOfLines={1}>
                 {item.mood}
               </Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{item.count} GÜN</Text>
-              </View>
+              <Text style={[styles.moodChipCount, index === 0 && styles.activeMoodChipLabel]}>
+                {item.count}
+              </Text>
             </View>
-          );
-        })}
+          ))}
+        </View>
       </View>
-
-      <Text style={styles.dominantSummaryText}>
-        bu filmin baskın hissi <Text style={styles.boldText}>{topMood}</Text>.
-      </Text>
     </View>
   );
 };
@@ -62,62 +72,110 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: Spacing.xs,
   },
-  stickersContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 4,
-    marginBottom: Spacing.sm,
+  moodBoard: {
+    minHeight: 218,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
-  stickerTag: {
+  boardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: BorderRadius.sm,
-    gap: 6,
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.08)',
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
   },
-  topStickerTag: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
+  summaryPill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  stickerMoodText: {
-    fontSize: 13,
-    fontFamily: Fonts.sansExtraBold,
-    color: Colors.text,
-  },
-  topStickerMoodText: {
-    fontSize: 17,
-  },
-  countBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  countBadgeText: {
-    fontSize: 9,
+  summaryPillText: {
+    fontSize: 10,
     fontFamily: Fonts.mono,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.text,
   },
-  dominantSummaryText: {
-    fontSize: 13,
-    fontFamily: Fonts.sans,
-    color: Colors.textSecondary,
-    marginTop: 2,
+  boardLabel: {
+    fontSize: 12,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 3,
   },
-  boldText: {
+  boardTitle: {
+    fontSize: 31,
+    lineHeight: 35,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+  },
+  boardCopy: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textSecondary,
+    marginTop: 5,
+    maxWidth: '78%',
+  },
+  moodChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 20,
+  },
+  moodChip: {
+    minWidth: 68,
+    minHeight: 54,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    paddingHorizontal: 9,
+    paddingVertical: 8,
+    justifyContent: 'space-between',
+  },
+  activeMoodChip: {
+    backgroundColor: Colors.text,
+    borderColor: Colors.text,
+  },
+  moodChipLabel: {
+    fontSize: 11,
     fontFamily: Fonts.sansBold,
     color: Colors.text,
+    textTransform: 'capitalize',
+  },
+  moodChipCount: {
+    fontSize: 17,
+    lineHeight: 19,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+  },
+  activeMoodChipLabel: {
+    color: '#FFFFFF',
+  },
+  backdropText: {
+    position: 'absolute',
+    right: 8,
+    top: 54,
+    fontSize: 78,
+    lineHeight: 82,
+    fontFamily: Fonts.sansBlack,
+    color: 'rgba(255, 255, 255, 0.18)',
   },
 });

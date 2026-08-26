@@ -18,6 +18,7 @@ import { PozIcon } from '@/components/PozIcon';
 import { useApp } from '@/context/AppContext';
 
 const heroImage = require('../images/image.png');
+const BYPASS_AUTH_FOR_TESTING = true;
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -33,12 +34,22 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Eğer kullanıcı zaten giriş yaptıysa doğrudan tab'e yönlendir
+  // Test sırasında login/register ekranını bypass et.
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (BYPASS_AUTH_FOR_TESTING || isAuthenticated) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
+
+  if (BYPASS_AUTH_FOR_TESTING) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.bypassLoading}>
+          <ActivityIndicator color={Colors.text} size="small" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleSubmit = async () => {
     setErrorMessage(null);
@@ -234,6 +245,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  bypassLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   container: {
     flex: 1,

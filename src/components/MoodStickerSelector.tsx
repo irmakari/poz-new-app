@@ -5,12 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Animated,
 } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
-import { MOOD_OPTIONS, MoodOptionItem } from '@/utils/captureReviewData';
+import { MOOD_OPTIONS } from '@/utils/captureReviewData';
 
 interface MoodStickerSelectorProps {
   selectedMood: string | null;
@@ -31,11 +30,28 @@ export const MoodStickerSelector: React.FC<MoodStickerSelectorProps> = ({
     <View style={styles.container}>
       <SectionTitle title="bu kare nasıl hissettiriyor?" stamp="MOOD LOG" />
 
-      {/* Mood Stickers Grid */}
-      <View style={styles.stickersGrid}>
+      <View style={styles.moodBoard}>
+        <Text style={styles.backdropText}>MOOD</Text>
+
+        <View style={styles.boardHeader}>
+          <View style={styles.iconBubble}>
+            <PozIcon name="sparkle" size={17} color={Colors.text} />
+          </View>
+          <View style={styles.summaryPill}>
+            <Text style={styles.summaryPillText}>
+              {(customMood || selectedMood || 'seç').toUpperCase()}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.kickerText}>Bugünkü His</Text>
+        <Text style={styles.boardTitle} numberOfLines={1}>
+          {customMood || selectedMood || 'Henüz Taze'}
+        </Text>
+
+        <View style={styles.moodGrid}>
         {MOOD_OPTIONS.map((item, index) => {
           const isSelected = selectedMood === item.label && !customMood;
-          const rotation = index % 2 === 0 ? '-1.8deg' : '1.8deg';
 
           return (
             <TouchableOpacity
@@ -48,60 +64,56 @@ export const MoodStickerSelector: React.FC<MoodStickerSelectorProps> = ({
                 onSelectMood(item.label);
               }}
               style={[
-                styles.stickerCard,
-                { backgroundColor: item.color, transform: [{ rotate: isSelected ? '0deg' : rotation }] },
-                isSelected && styles.selectedStickerCard,
+                styles.moodChip,
+                { backgroundColor: isSelected ? Colors.text : '#FFFFFF' },
               ]}
             >
-              {isSelected ? (
-                <PozIcon name="star" size={14} color={Colors.text} />
-              ) : (
-                <PozIcon name="sparkle" size={14} color={Colors.text} />
-              )}
+              <View style={[styles.colorDot, { backgroundColor: item.color }]} />
               <Text
                 style={[
-                  styles.stickerText,
-                  isSelected && styles.selectedStickerText,
+                  styles.moodChipText,
+                  isSelected && styles.selectedMoodChipText,
                 ]}
+                numberOfLines={1}
               >
                 {item.label}
               </Text>
             </TouchableOpacity>
           );
         })}
-      </View>
-
-      {/* Custom Mood Action */}
-      {!showCustomInput ? (
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={() => setShowCustomInput(true)}
-          style={styles.customMoodButton}
-        >
-          <Text style={styles.customMoodButtonText}>+ kendi hissimi yaz</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.customInputBox}>
-          <TextInput
-            value={customMood}
-            onChangeText={(text) => {
-              onChangeCustomMood(text);
-              if (text) onSelectMood(text);
-            }}
-            maxLength={24}
-            placeholder="hissini yaz (örn: dingin)..."
-            placeholderTextColor="rgba(28, 26, 36, 0.4)"
-            style={styles.customInput}
-          />
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setShowCustomInput(false)}
-            style={styles.customCloseButton}
-          >
-            <Text style={styles.customCloseText}>tamam</Text>
-          </TouchableOpacity>
         </View>
-      )}
+
+        {!showCustomInput ? (
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => setShowCustomInput(true)}
+            style={styles.customMoodButton}
+          >
+            <Text style={styles.customMoodButtonText}>kendi hissimi yaz</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.customInputBox}>
+            <TextInput
+              value={customMood}
+              onChangeText={(text) => {
+                onChangeCustomMood(text);
+                if (text) onSelectMood(text);
+              }}
+              maxLength={24}
+              placeholder="hissini yaz..."
+              placeholderTextColor="rgba(15, 23, 42, 0.42)"
+              style={styles.customInput}
+            />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setShowCustomInput(false)}
+              style={styles.customCloseButton}
+            >
+              <Text style={styles.customCloseText}>tamam</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -110,66 +122,119 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: Spacing.xs,
   },
-  stickersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+  moodBoard: {
     marginTop: 4,
-    marginBottom: 8,
+    minHeight: 238,
+    backgroundColor: '#C6A5FF',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
-  stickerCard: {
+  boardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: BorderRadius.sm,
-    gap: 6,
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.08)',
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
   },
-  selectedStickerCard: {
-    borderWidth: 2,
-    borderColor: '#181520',
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 4,
+  summaryPill: {
+    maxWidth: '54%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  stickerText: {
-    fontSize: 13,
-    fontFamily: Fonts.sansBold,
+  summaryPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    fontWeight: '900',
     color: Colors.text,
   },
-  selectedStickerText: {
+  kickerText: {
+    fontSize: 12,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  boardTitle: {
+    fontSize: 30,
+    lineHeight: 33,
     fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+    textTransform: 'capitalize',
+    marginBottom: 16,
+  },
+  moodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  moodChip: {
+    width: '31.5%',
+    minHeight: 54,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    justifyContent: 'space-between',
+  },
+  colorDot: {
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
+  },
+  moodChipText: {
+    fontSize: 11,
+    fontFamily: Fonts.sansBold,
+    color: Colors.text,
+    textTransform: 'capitalize',
+  },
+  selectedMoodChipText: {
+    color: '#FFFFFF',
   },
   customMoodButton: {
     alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    marginTop: 2,
+    backgroundColor: Colors.text,
+    borderRadius: BorderRadius.full,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
+    marginTop: 14,
   },
   customMoodButtonText: {
     fontSize: 12,
     fontFamily: Fonts.sansBold,
-    color: Colors.textSecondary,
-    textDecorationLine: 'underline',
+    color: '#FFFFFF',
   },
   customInputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFDF9',
-    borderRadius: BorderRadius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.sm,
     paddingHorizontal: 12,
-    height: 44,
+    minHeight: 46,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
     gap: 8,
-    marginTop: 4,
+    marginTop: 14,
   },
   customInput: {
     flex: 1,
@@ -178,14 +243,23 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   customCloseButton: {
-    backgroundColor: '#181520',
+    backgroundColor: Colors.text,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 4,
+    paddingVertical: 7,
+    borderRadius: BorderRadius.full,
   },
   customCloseText: {
     fontSize: 11,
     fontFamily: Fonts.sansBold,
-    color: '#FFFDF6',
+    color: '#FFFFFF',
+  },
+  backdropText: {
+    position: 'absolute',
+    right: -10,
+    bottom: -11,
+    fontSize: 58,
+    lineHeight: 62,
+    fontFamily: Fonts.sansBold,
+    color: 'rgba(255, 255, 255, 0.2)',
   },
 });

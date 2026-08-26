@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { ScrapbookCard } from '@/components/ScrapbookCard';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
 import { MockSongItem } from '@/utils/captureReviewData';
@@ -22,75 +21,77 @@ export const SongSelectorCard: React.FC<SongSelectorCardProps> = ({
       <SectionTitle title="o anın şarkısı" stamp="AUDIO" />
 
       {selectedSong ? (
-        <ScrapbookCard
-          bgColor={selectedSong.color || Colors.pink}
-          rotation="1.2deg"
-          hasTape="top-right"
-          tapeColor={Colors.tapeDefault}
-          padding={Spacing.md}
-          style={styles.selectedCard}
-        >
-          <View style={styles.headerRow}>
-            <View style={styles.tagBadge}>
-              <Text style={styles.tagBadgeText}>NOW PLAYING</Text>
+        <View style={[styles.songCard, { backgroundColor: selectedSong.color || '#FF5AB3' }]}>
+          <Text style={styles.backdropText}>SOUND</Text>
+
+          <View style={styles.topRow}>
+            <View style={styles.iconBubble}>
+              <PozIcon name="music" size={16} color={Colors.text} />
             </View>
 
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onOpenPicker}
-              style={styles.changeLinkButton}
+              style={styles.smallPill}
             >
-              <Text style={styles.changeLinkText}>değiştir</Text>
+              <Text style={styles.smallPillText}>DEĞİŞTİR</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.songContentRow}>
-            <View style={styles.albumCircle}>
-              <PozIcon name="music" size={22} color={Colors.text} />
-            </View>
+          <Text style={styles.kickerText}>Now Playing</Text>
+          <Text style={styles.songTitleText} numberOfLines={2}>{selectedSong.title}</Text>
+          <Text style={styles.songArtistText} numberOfLines={1}>{selectedSong.artist}</Text>
 
-            <View style={styles.songTextGroup}>
-              <Text style={styles.songTitleText}>{selectedSong.title}</Text>
-              <Text style={styles.songArtistText}>{selectedSong.artist}</Text>
+          <View style={styles.bottomRow}>
+            <View style={styles.stackDiscs}>
+              <View style={[styles.miniDisc, styles.discDark]} />
+              <View style={[styles.miniDisc, styles.discLavender]} />
+              <View style={[styles.miniDisc, styles.discWhite]} />
             </View>
 
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onRemoveSong}
-              style={styles.removeIconButton}
+              style={styles.removeButton}
             >
-              <Text style={styles.removeIconText}>✕</Text>
+              <Text style={styles.removeButtonText}>kaldır</Text>
             </TouchableOpacity>
           </View>
-        </ScrapbookCard>
+        </View>
       ) : (
-        <ScrapbookCard
-          bgColor="#FFFDF9"
-          rotation="-0.8deg"
-          hasTape="top-left"
-          tapeColor={Colors.tapePink}
-          padding={Spacing.md}
+        <TouchableOpacity
+          activeOpacity={0.86}
+          onPress={onOpenPicker}
           style={styles.emptyCard}
         >
-          <View style={styles.emptyContentRow}>
-            <View style={styles.emptyIconCircle}>
-              <PozIcon name="music" size={20} color={Colors.textMuted} />
+          <Text style={styles.emptyBackdropText}>SOUND</Text>
+
+          <View style={styles.topRow}>
+            <View style={styles.iconBubble}>
+              <PozIcon name="music" size={16} color={Colors.text} />
             </View>
 
-            <View style={styles.emptyTextGroup}>
-              <Text style={styles.emptyTitleText}>henüz şarkı eklenmedi</Text>
-              <Text style={styles.emptySubText}>o anı anlatan bir müzik seç</Text>
+            <View style={styles.smallPill}>
+              <Text style={styles.smallPillText}>AUDIO</Text>
             </View>
-
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={onOpenPicker}
-              style={styles.selectButton}
-            >
-              <Text style={styles.selectButtonText}>şarkı seç</Text>
-            </TouchableOpacity>
           </View>
-        </ScrapbookCard>
+
+          <Text style={styles.kickerText}>Track</Text>
+          <Text style={styles.emptyTitleText}>Şarkı Seç</Text>
+          <Text style={styles.emptySubText}>o anı anlatan müziği ekle</Text>
+
+          <View style={styles.bottomRow}>
+            <View style={styles.stackDiscs}>
+              <View style={[styles.miniDisc, styles.discDark]} />
+              <View style={[styles.miniDisc, styles.discPink]} />
+              <View style={[styles.miniDisc, styles.discWhite]} />
+            </View>
+
+            <View style={styles.playBubble}>
+              <PozIcon name="arrow-right" size={15} color={Colors.text} />
+            </View>
+          </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -100,119 +101,160 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: Spacing.xs,
   },
-  selectedCard: {
+  songCard: {
     marginTop: 4,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  tagBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    minHeight: 184,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.1)',
-  },
-  tagBadgeText: {
-    fontFamily: Fonts.mono,
-    fontSize: 9,
-    fontWeight: '800',
-    color: Colors.pinkDark,
-  },
-  changeLinkButton: {
-    paddingHorizontal: 4,
-  },
-  changeLinkText: {
-    fontFamily: Fonts.sansBold,
-    fontSize: 12,
-    color: Colors.pinkDark,
-    textDecorationLine: 'underline',
-  },
-  songContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  albumCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: '#FFFDF9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.1)',
-  },
-  songTextGroup: {
-    flex: 1,
-  },
-  songTitleText: {
-    fontSize: 16,
-    fontFamily: Fonts.sansBlack,
-    color: Colors.text,
-  },
-  songArtistText: {
-    fontSize: 12,
-    fontFamily: Fonts.sans,
-    color: Colors.textSecondary,
-    marginTop: 1,
-  },
-  removeIconButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(28, 26, 36, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeIconText: {
-    fontSize: 12,
-    fontFamily: Fonts.sansBold,
-    color: Colors.textSecondary,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
   emptyCard: {
     marginTop: 4,
+    minHeight: 184,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    backgroundColor: '#8C9BF6',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
-  emptyContentRow: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    marginBottom: 18,
   },
-  emptyIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(28, 26, 36, 0.04)',
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
   },
-  emptyTextGroup: {
-    flex: 1,
+  smallPill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  smallPillText: {
+    fontSize: 10,
+    fontFamily: Fonts.mono,
+    fontWeight: '900',
+    color: Colors.text,
+  },
+  kickerText: {
+    fontSize: 12,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  songTitleText: {
+    fontSize: 27,
+    lineHeight: 30,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+    maxWidth: '88%',
+  },
+  songArtistText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textSecondary,
+    marginTop: 5,
   },
   emptyTitleText: {
-    fontSize: 14,
+    fontSize: 29,
+    lineHeight: 32,
+    fontFamily: Fonts.sansBlack,
+    color: '#FFFFFF',
+  },
+  emptySubText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: 'rgba(255, 255, 255, 0.82)',
+    marginTop: 5,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 'auto',
+  },
+  stackDiscs: {
+    flexDirection: 'row',
+  },
+  miniDisc: {
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginRight: -7,
+  },
+  discDark: {
+    backgroundColor: Colors.text,
+  },
+  discLavender: {
+    backgroundColor: '#C6A5FF',
+  },
+  discPink: {
+    backgroundColor: '#FF5AB3',
+  },
+  discWhite: {
+    backgroundColor: '#FFFFFF',
+  },
+  removeButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  removeButtonText: {
+    fontSize: 12,
     fontFamily: Fonts.sansBold,
     color: Colors.text,
   },
-  emptySubText: {
-    fontSize: 12,
-    fontFamily: Fonts.sans,
-    color: Colors.textSecondary,
-    marginTop: 1,
+  playBubble: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
   },
-  selectButton: {
-    backgroundColor: '#181520',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.md,
-  },
-  selectButtonText: {
-    fontSize: 12,
+  backdropText: {
+    position: 'absolute',
+    right: -10,
+    bottom: -10,
+    fontSize: 56,
+    lineHeight: 60,
     fontFamily: Fonts.sansBold,
-    color: '#FFFDF6',
+    color: 'rgba(255, 255, 255, 0.22)',
+  },
+  emptyBackdropText: {
+    position: 'absolute',
+    right: -10,
+    bottom: -10,
+    fontSize: 56,
+    lineHeight: 60,
+    fontFamily: Fonts.sansBold,
+    color: 'rgba(255, 255, 255, 0.18)',
   },
 });

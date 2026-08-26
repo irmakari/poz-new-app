@@ -12,6 +12,39 @@ const mockUsers = [
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_ITERATIONS = 120000;
+const PASSWORD_KEY_LENGTH = 64;
+const PASSWORD_DIGEST = 'sha512';
+
+const hashPassword = (password) => {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto
+    .pbkdf2Sync(password, salt, PASSWORD_ITERATIONS, PASSWORD_KEY_LENGTH, PASSWORD_DIGEST)
+    .toString('hex');
+  return `${PASSWORD_ITERATIONS}:${salt}:${hash}`;
+};
+
+const verifyPassword = (password, storedHash) => {
+  if (!storedHash) return false;
+
+  const [iterationsValue, salt, originalHash] = storedHash.split(':');
+  const iterations = Number(iterationsValue);
+  if (!iterations || !salt || !originalHash) return false;
+
+  const hash = crypto
+    .pbkdf2Sync(password, salt, iterations, PASSWORD_KEY_LENGTH, PASSWORD_DIGEST)
+    .toString('hex');
+
+  if (hash.length !== originalHash.length) return false;
+
+  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(originalHash, 'hex'));
+};
+
+const sanitizeUser = (user) => {
+  if (!user) return user;
+  const { password_hash, ...safeUser } = user;
+  return safeUser;
+};
 
 // REGISTER
 router.post('/register', async (req, res) => {
@@ -24,6 +57,9 @@ router.post('/register', async (req, res) => {
     }
     const cleanInput = email.trim().toLowerCase();
     const cleanEmail = cleanInput.includes('@') ? cleanInput : `${cleanInput}@pozapp.com`;
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({ success: false, error: 'Geçerli bir e-posta adresi giriniz' });
+    }
 
     if (!password || password.length < 4) {
       return res.status(400).json({ success: false, error: 'Şifre en az 4 karakter olmalıdır' });
@@ -31,22 +67,23 @@ router.post('/register', async (req, res) => {
 
     const cleanUsername = (username && username.trim()) || cleanEmail.split('@')[0];
     const cleanName = (full_name && full_name.trim()) || cleanUsername;
+    const passwordHash = hashPassword(password);
 
-    // E-posta mükerrerlik kontrolü
+    // E-posta / kullanıcı adı mükerrerlik kontrolü
     if (supabase) {
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('id')
-        .eq('email', cleanEmail)
+        .or(`email.eq.${cleanEmail},username.eq.${cleanUsername}`)
         .maybeSingle();
 
       if (existingUser) {
-        return res.status(400).json({ success: false, error: 'Bu e-posta adresi zaten kullanımda' });
+        return res.status(400).json({ success: false, error: 'Bu e-posta adresi veya kullanıcı adı zaten kullanımda' });
       }
     } else {
-      const existing = mockUsers.find(u => u.email === cleanEmail);
+      const existing = mockUsers.find(u => u.email === cleanEmail || u.username === cleanUsername);
       if (existing) {
-        return res.status(400).json({ success: false, error: 'Bu e-posta adresi zaten kullanımda' });
+        return res.status(400).json({ success: false, error: 'Bu e-posta adresi veya kullanıcı adı zaten kullanımda' });
       }
     }
 
@@ -55,7 +92,7 @@ router.post('/register', async (req, res) => {
 
     if (supabase) {
       const { data, error } = await supabase.from('profiles').insert([
-        { id: userId, email: cleanEmail, username: cleanUsername, full_name: cleanName }
+        { id: userId, email: cleanEmail, username: cleanUsername, full_name: cleanName, password_hash: passwordHash }
       ]).select().single();
 
       if (error && error.code !== '42P01') {
@@ -64,16 +101,17 @@ router.post('/register', async (req, res) => {
       }
       if (data) newUser = data;
     } else {
-      mockUsers.push(newUser);
+      mockUsers.push({ ...newUser, password_hash: passwordHash });
     }
 
-    const token = jwt.sign(newUser, process.env.JWT_SECRET || 'poz_app_secret', { expiresIn: '30d' });
+    const safeUser = sanitizeUser(newUser);
+    const token = jwt.sign(safeUser, process.env.JWT_SECRET || 'poz_app_secret', { expiresIn: '30d' });
 
     return res.status(201).json({
       success: true,
       message: 'Kullanıcı başarıyla oluşturuldu',
       token,
-      user: newUser
+      user: safeUser
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -105,24 +143,26 @@ router.post('/login', async (req, res) => {
       user = mockUsers.find(u => u.email === cleanEmail || u.username === input || u.email === input);
     }
 
-    // Fallback if not in DB & no Supabase
     if (!user) {
-      user = {
-        id: crypto.randomUUID(),
-        email: cleanEmail,
-        username: input.includes('@') ? input.split('@')[0] : input,
-        full_name: input.charAt(0).toUpperCase() + input.slice(1)
-      };
-      mockUsers.push(user);
+      return res.status(401).json({ success: false, error: 'E-posta/kullanıcı adı veya şifre hatalı' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, username: user.username }, process.env.JWT_SECRET || 'poz_app_secret', { expiresIn: '30d' });
+    const isPasswordValid = user.password_hash
+      ? verifyPassword(password, user.password_hash)
+      : !supabase;
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, error: 'E-posta/kullanıcı adı veya şifre hatalı' });
+    }
+
+    const safeUser = sanitizeUser(user);
+    const token = jwt.sign({ id: safeUser.id, email: safeUser.email, username: safeUser.username }, process.env.JWT_SECRET || 'poz_app_secret', { expiresIn: '30d' });
 
     return res.json({
       success: true,
       message: 'Giriş başarılı',
       token,
-      user
+      user: safeUser
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
@@ -136,7 +176,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     let profile = req.user;
     if (supabase && req.user?.id) {
       const { data } = await supabase.from('profiles').select('*').eq('id', req.user.id).single();
-      if (data) profile = data;
+      if (data) profile = sanitizeUser(data);
     }
 
     return res.json({
@@ -168,7 +208,7 @@ router.patch('/profile', authMiddleware, async (req, res) => {
     if (supabase && userId) {
       const { data, error } = await supabase.from('profiles').update(updates).eq('id', userId).select().single();
       if (!error && data) {
-        return res.json({ success: true, message: 'Profil başarıyla güncellendi', user: data });
+        return res.json({ success: true, message: 'Profil başarıyla güncellendi', user: sanitizeUser(data) });
       }
     }
 

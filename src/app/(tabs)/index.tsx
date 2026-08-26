@@ -168,26 +168,29 @@ export default function HomeScreen() {
           {/* Left Column */}
           <View style={styles.collageColumnLeft}>
             {/* 1. Yellow Memo Sheet Card (Torn Bottom Edge) */}
-            <ScrapbookCard
-              bgColor={Colors.paper}
-              rotation="-2.4deg"
-              hasTape="top-left"
-              tapeColor={Colors.tapeDefault}
-              hasTornEdge="bottom"
-              padding={Spacing.md}
+            <TouchableOpacity
+              activeOpacity={0.86}
               onPress={() => {
                 setNoteInputText(todayNoteObj?.note || '');
                 setIsEditNoteModalOpen(true);
               }}
               style={styles.yellowMemoCard}
             >
-              <View style={styles.cardHeaderRow}>
-                <Text style={styles.cardHeaderTitle}>günün notu</Text>
-                <PaperStamp label="MEMO" color={Colors.burgundy} rotation="4deg" />
+              <Text style={styles.homeCardBackdrop}>NOT</Text>
+
+              <View style={styles.homeCardTopRow}>
+                <View style={styles.homeIconBubble}>
+                  <PozIcon name="sparkle" size={15} color={Colors.text} />
+                </View>
+                <View style={styles.homePill}>
+                  <Text style={styles.homePillText}>MEMO</Text>
+                </View>
               </View>
 
-              <Text style={styles.handwrittenNoteText}>
-                {hasNote ? todayNoteObj!.note : 'dokunarak bugünün ilk notunu yaz... ✍️'}
+              <Text style={styles.homeCardKicker}>Daily</Text>
+              <Text style={styles.homeCardTitle}>Günün Notu</Text>
+              <Text style={styles.handwrittenNoteText} numberOfLines={4}>
+                {hasNote ? todayNoteObj!.note : 'dokunarak bugünün ilk notunu yaz...'}
               </Text>
 
               <View style={styles.noteFooter}>
@@ -195,30 +198,34 @@ export default function HomeScreen() {
                   {hasNote ? (todayNoteObj?.timestamp || `${getFormattedTime()} • ev`) : `${getFormattedTime()} • henüz not yok`}
                 </Text>
               </View>
-            </ScrapbookCard>
+            </TouchableOpacity>
 
             {/* 4. Green Mood Sticker Card */}
-            <ScrapbookCard
-              bgColor={Colors.green}
-              rotation="3deg"
-              hasTape="top-right"
-              tapeColor={Colors.tapeDefault}
-              padding={Spacing.md}
+            <TouchableOpacity
+              activeOpacity={0.86}
               onPress={() => setIsMoodModalOpen(true)}
               style={styles.greenStickerCard}
             >
-              <View style={styles.moodHeaderRow}>
-                <PozIcon name="sparkle" size={18} color="#F4ECE2" />
-                <Text style={styles.moodTagText}>bugünkü hissin</Text>
+              <Text style={styles.moodCardBackdrop}>HİS</Text>
+
+              <View style={styles.homeCardTopRow}>
+                <View style={styles.homeIconBubble}>
+                  <PozIcon name="sparkle" size={15} color={Colors.text} />
+                </View>
+                <View style={styles.homePill}>
+                  <Text style={styles.homePillText}>MOOD</Text>
+                </View>
               </View>
+
+              <Text style={styles.homeCardKicker}>Bugünkü</Text>
               <Text style={styles.moodValueText} numberOfLines={1}>
                 {hasMood ? todayNoteObj!.mood : 'henüz taze'}
               </Text>
 
               <View style={styles.stickerBadge}>
-                <Text style={styles.stickerText}>{hasMood ? '★ GOOD VIBES' : '★ BUGÜN'}</Text>
+                <Text style={styles.stickerText}>{hasMood ? 'GOOD VIBES' : 'BUGÜN'}</Text>
               </View>
-            </ScrapbookCard>
+            </TouchableOpacity>
           </View>
 
           {/* Right Column */}
@@ -617,7 +624,68 @@ const styles = StyleSheet.create({
 
   /* Yellow Memo Card */
   yellowMemoCard: {
-    minHeight: 165,
+    minHeight: 190,
+    backgroundColor: '#FFBE55',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
+  },
+  homeCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  homeIconBubble: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
+  },
+  homePill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  homePillText: {
+    fontSize: 9,
+    fontFamily: Fonts.mono,
+    fontWeight: '900',
+    color: Colors.text,
+  },
+  homeCardKicker: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  homeCardTitle: {
+    fontSize: 24,
+    lineHeight: 27,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  homeCardBackdrop: {
+    position: 'absolute',
+    right: -4,
+    bottom: -12,
+    fontSize: 62,
+    lineHeight: 66,
+    fontFamily: Fonts.sansBlack,
+    color: 'rgba(15, 23, 42, 0.08)',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -632,27 +700,38 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   handwrittenNoteText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.text,
-    fontFamily: Fonts.serif,
-    fontStyle: 'italic',
-    lineHeight: 21,
-    marginVertical: 4,
+    fontFamily: Fonts.sansMedium,
+    lineHeight: 18,
+    marginVertical: 0,
   },
   noteFooter: {
     marginTop: 'auto',
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
   },
   handwrittenTimestamp: {
     fontFamily: Fonts.mono,
     fontSize: 10,
-    color: Colors.yellowDark,
+    color: Colors.text,
+    fontWeight: '800',
   },
 
   /* Green Mood Card */
   greenStickerCard: {
-    minHeight: 125,
+    minHeight: 154,
+    backgroundColor: '#C6A5FF',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     justifyContent: 'space-between',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
   moodHeaderRow: {
     flexDirection: 'row',
@@ -661,32 +740,42 @@ const styles = StyleSheet.create({
   },
   moodTagText: {
     fontSize: 11,
-    color: '#F4ECE2',
+    color: Colors.text,
     fontFamily: Fonts.mono,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
   moodValueText: {
-    fontSize: 22,
-    color: '#F4ECE2',
+    fontSize: 26,
+    lineHeight: 29,
+    color: Colors.text,
     fontFamily: Fonts.sansBlack,
     marginVertical: 2,
+    textTransform: 'capitalize',
   },
   stickerBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
+    backgroundColor: Colors.text,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderStyle: 'dashed',
+    borderColor: Colors.text,
   },
   stickerText: {
     fontFamily: Fonts.mono,
     fontSize: 9,
-    color: '#F4ECE2',
+    color: '#FFFFFF',
     fontWeight: '800',
+  },
+  moodCardBackdrop: {
+    position: 'absolute',
+    right: -1,
+    bottom: -12,
+    fontSize: 58,
+    lineHeight: 62,
+    fontFamily: Fonts.sansBlack,
+    color: 'rgba(255, 255, 255, 0.22)',
   },
 
   /* Blue Photo Prints Card */

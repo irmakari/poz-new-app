@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
-import { ScrapbookCard } from '@/components/ScrapbookCard';
-import { PaperStamp } from '@/components/PaperStamp';
+import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { SectionTitle } from '@/components/SectionTitle';
+import { PozIcon } from '@/components/PozIcon';
 
 interface JournalNoteInputProps {
   value: string;
@@ -22,22 +21,25 @@ export const JournalNoteInput: React.FC<JournalNoteInputProps> = ({
     <View style={styles.container}>
       <SectionTitle title="bu kareye bir not bırak" stamp="MEMO" />
 
-      <ScrapbookCard
-        bgColor={Colors.yellow}
-        rotation="-1deg"
-        hasTape="top-left"
-        tapeColor={Colors.tapePink}
-        hasTornEdge="bottom"
-        padding={Spacing.md}
+      <View
         style={[
           styles.noteCard,
           isFocused && styles.noteCardFocused,
         ]}
       >
+        <Text style={styles.backdropText}>NOTE</Text>
+
         <View style={styles.headerRow}>
-          <Text style={styles.labelTitle}>GÜNLÜK NOTU</Text>
-          <PaperStamp label="NOTE" color={Colors.yellowDark} rotation="3deg" />
+          <View style={styles.iconBubble}>
+            <PozIcon name="sparkle" size={16} color={Colors.text} />
+          </View>
+          <Text style={styles.counterText}>
+            {value.length} / {maxLength}
+          </Text>
         </View>
+
+        <Text style={styles.kickerText}>Memo</Text>
+        <Text style={styles.labelTitle}>Günün Notu</Text>
 
         <TextInput
           multiline
@@ -53,13 +55,7 @@ export const JournalNoteInput: React.FC<JournalNoteInputProps> = ({
           onBlur={() => setIsFocused(false)}
           style={styles.textInput}
         />
-
-        <View style={styles.footerRow}>
-          <Text style={styles.counterText}>
-            {value.length} / {maxLength}
-          </Text>
-        </View>
-      </ScrapbookCard>
+      </View>
     </View>
   );
 };
@@ -70,47 +66,81 @@ const styles = StyleSheet.create({
   },
   noteCard: {
     marginTop: 4,
+    minHeight: 198,
+    backgroundColor: '#FFBE55',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.1)',
-  },
-  noteCardFocused: {
-    borderColor: Colors.yellowDark,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    overflow: 'hidden',
     shadowColor: Colors.text,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
     elevation: 3,
+  },
+  noteCardFocused: {
+    borderColor: Colors.text,
+    shadowColor: Colors.text,
+    shadowOpacity: 0.2,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 18,
+  },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
+  },
+  kickerText: {
+    fontSize: 12,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 2,
   },
   labelTitle: {
-    fontSize: 10,
-    fontFamily: Fonts.mono,
-    color: Colors.yellowDark,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 29,
+    lineHeight: 32,
+    fontFamily: Fonts.sansBlack,
+    color: Colors.text,
+    marginBottom: 10,
   },
   textInput: {
     fontSize: 14,
-    lineHeight: 20,
-    fontFamily: Fonts.serif,
+    lineHeight: 19,
+    fontFamily: Fonts.sansMedium,
     color: Colors.text,
-    minHeight: 80,
+    minHeight: 74,
     textAlignVertical: 'top',
     padding: 0,
-  },
-  footerRow: {
-    alignItems: 'flex-end',
-    marginTop: 4,
+    maxWidth: '92%',
   },
   counterText: {
     fontSize: 10,
     fontFamily: Fonts.mono,
-    color: Colors.textSecondary,
-    fontWeight: '700',
+    color: Colors.text,
+    fontWeight: '900',
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    overflow: 'hidden',
+  },
+  backdropText: {
+    position: 'absolute',
+    right: -8,
+    bottom: -14,
+    fontSize: 72,
+    lineHeight: 76,
+    fontFamily: Fonts.sansBlack,
+    color: 'rgba(15, 23, 42, 0.08)',
   },
 });

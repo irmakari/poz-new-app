@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
-import { ScrapbookCard } from '@/components/ScrapbookCard';
 import { SectionTitle } from '@/components/SectionTitle';
 import { PozIcon } from '@/components/PozIcon';
 import { FilmSong } from '@/utils/filmData';
@@ -31,41 +30,45 @@ export const MonthSongsSection: React.FC<MonthSongsSectionProps> = ({ songs }) =
         contentContainerStyle={styles.scrollContent}
       >
         {songs.map((song, index) => {
-          const cardColors = [Colors.pink, Colors.blue, Colors.yellow, Colors.lavender];
+          const cardColors = ['#FF5AB3', '#8C9BF6', '#FFBE55', '#C6A5FF'];
           const color = cardColors[index % cardColors.length];
-          const rotation = index % 2 === 0 ? '-1.8deg' : '1.5deg';
+          const isLight = color === '#FFBE55' || color === '#C6A5FF';
 
           return (
-            <ScrapbookCard
+            <TouchableOpacity
               key={song.id}
-              bgColor={color}
-              rotation={rotation}
-              hasTape="top-right"
-              tapeColor={Colors.tapeDefault}
-              padding={Spacing.sm}
+              activeOpacity={0.86}
               onPress={() => handleSongPress(song)}
-              style={styles.songCard}
+              style={[styles.songCard, { backgroundColor: color }]}
             >
+              <Text style={[styles.backdropText, isLight && styles.darkBackdropText]}>SOUND</Text>
+
               <View style={styles.topRow}>
-                <PozIcon name="music" size={16} color={Colors.text} />
-                <Text style={styles.dateLabel}>{song.dateStr}</Text>
+                <View style={styles.iconBubble}>
+                  <PozIcon name="music" size={15} color={Colors.text} />
+                </View>
+                <Text style={[styles.dateLabel, !isLight && styles.lightText]}>{song.dateStr}</Text>
               </View>
 
-              <View style={styles.cassetteMockBox}>
-                <View style={styles.albumCircle}>
-                  <PozIcon name="music" size={18} color="#FFFDF9" />
-                </View>
+              <Text style={[styles.typeLabel, !isLight && styles.lightText]}>Track</Text>
+              <Text style={[styles.titleText, !isLight && styles.lightText]} numberOfLines={2}>
+                {song.title}
+              </Text>
+              <Text style={[styles.artistText, !isLight && styles.lightMutedText]} numberOfLines={1}>
+                {song.artist}
+              </Text>
 
-                <View style={styles.songInfo}>
-                  <Text style={styles.titleText} numberOfLines={1}>
-                    {song.title}
-                  </Text>
-                  <Text style={styles.artistText} numberOfLines={1}>
-                    {song.artist}
-                  </Text>
+              <View style={styles.bottomRow}>
+                <View style={styles.stackAvatars}>
+                  <View style={[styles.miniDisc, styles.discDark]} />
+                  <View style={[styles.miniDisc, styles.discLight]} />
+                  <View style={[styles.miniDisc, styles.discWhite]} />
+                </View>
+                <View style={styles.playBubble}>
+                  <PozIcon name="arrow-right" size={15} color={Colors.text} />
                 </View>
               </View>
-            </ScrapbookCard>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
@@ -79,53 +82,116 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 2,
-    paddingVertical: 4,
+    paddingVertical: 6,
     gap: 12,
   },
   songCard: {
-    width: 185,
+    width: 168,
+    minHeight: 174,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+    shadowColor: Colors.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 7,
+    elevation: 3,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 18,
+  },
+  iconBubble: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.1)',
   },
   dateLabel: {
     fontFamily: Fonts.mono,
-    fontSize: 9,
-    color: Colors.textSecondary,
-    fontWeight: '700',
+    fontSize: 10,
+    color: Colors.text,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
-  cassetteMockBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    borderRadius: BorderRadius.sm,
-    padding: 6,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(28, 26, 36, 0.08)',
-  },
-  albumCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 6,
-    backgroundColor: Colors.tabBarBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  songInfo: {
-    flex: 1,
+  typeLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.text,
+    marginBottom: 4,
   },
   titleText: {
-    fontSize: 13,
-    fontFamily: Fonts.sansExtraBold,
+    fontSize: 22,
+    lineHeight: 25,
+    fontFamily: Fonts.sansBlack,
     color: Colors.text,
   },
   artistText: {
-    fontSize: 11,
-    fontFamily: Fonts.sans,
+    fontSize: 12,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textSecondary,
+    marginTop: 5,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 'auto',
+  },
+  stackAvatars: {
+    flexDirection: 'row',
+  },
+  miniDisc: {
+    width: 23,
+    height: 23,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginRight: -7,
+  },
+  discDark: {
+    backgroundColor: Colors.text,
+  },
+  discLight: {
+    backgroundColor: '#C6A5FF',
+  },
+  discWhite: {
+    backgroundColor: '#FFFFFF',
+  },
+  playBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.12)',
+  },
+  backdropText: {
+    position: 'absolute',
+    right: -10,
+    bottom: -9,
+    fontSize: 45,
+    lineHeight: 48,
+    fontFamily: Fonts.sansBlack,
+    color: 'rgba(255, 255, 255, 0.14)',
+  },
+  darkBackdropText: {
+    color: 'rgba(15, 23, 42, 0.08)',
+  },
+  lightText: {
+    color: '#FFFFFF',
+  },
+  lightMutedText: {
+    color: 'rgba(255, 255, 255, 0.78)',
   },
 });
