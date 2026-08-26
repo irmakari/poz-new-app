@@ -26,6 +26,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FILTERS, FilterType } from '@/constants/filmFilters';
 import { useApp } from '@/context/AppContext';
+import { DailyPhotoExistsModal } from '@/components/DailyPhotoExistsModal';
+import { getLocalDateKey, hasDailyPhotoForDate } from '@/utils/dailyMemory.utils';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -33,7 +35,7 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
-  const { activeFilm, films, setActiveFilm, currentCaptureMode, selectCaptureMode } = useApp();
+  const { activeFilm, films, photos, setActiveFilm, currentCaptureMode, selectCaptureMode } = useApp();
 
   const remainingFrames = activeFilm ? (activeFilm.remainingFrames ?? 24) : 24;
   const currentFrames = activeFilm ? (activeFilm.currentFrames ?? activeFilm.frameCount ?? 12) : 12;
@@ -50,8 +52,9 @@ export default function CameraScreen() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
-  // Modal State for Settings
+  // Modal State for Settings & Daily Exists Decision
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isDailyExistsModalOpen, setIsDailyExistsModalOpen] = useState(false);
 
   // Animated Values
   const flashAnimOpacity = useRef(new Animated.Value(0)).current;
@@ -103,6 +106,18 @@ export default function CameraScreen() {
   const handleShutterPress = async () => {
     if (isCapturing) return;
 
+    if (currentCaptureMode === 'daily') {
+      const todayKey = getLocalDateKey();
+      if (hasDailyPhotoForDate(photos, todayKey)) {
+        setIsDailyExistsModalOpen(true);
+        return;
+      }
+    }
+
+    await executeCapture(false);
+  };
+
+  const executeCapture = async (isReplacement: boolean = false) => {
     if (currentCaptureMode === 'film' && remainingFrames <= 0) {
       Alert.alert(
         'Film Rulosu Doldu! 🎞️',
@@ -151,6 +166,7 @@ export default function CameraScreen() {
               viewfinderMode,
               selectedFilter,
               isDreamyGlow: isDreamyGlow ? '1' : '0',
+              captureIntent: isReplacement ? 'replaceDaily' : 'createDaily',
             },
           });
         }, 400);
@@ -266,10 +282,11 @@ export default function CameraScreen() {
 
         {/* Mode Info Badge Under Viewfinder */}
         <View style={styles.infoBannerRow}>
+          <View style={[styles.ledDot, { backgroundColor: currentCaptureMode === 'daily' ? '#22C55E' : '#3B82F6' }]} />
           <Text style={styles.infoBannerText}>
             {currentCaptureMode === 'film'
-              ? `${activeFilm ? (activeFilm.name || activeFilm.title) : 'summer glow 400'} • ${remainingFrames} poz kaldı`
-              : 'günlük mod • çek, albüme kaydet'}
+              ? `${activeFilm ? (activeFilm.name || activeFilm.title) : 'summer glow 400'} • ${remainingFrames} POZ KALDI`
+              : 'GÜNLÜK MOD • ANLIK ÇEKİM'}
           </Text>
         </View>
       </View>
@@ -421,6 +438,25 @@ export default function CameraScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Decision Modal when today's Daily photo already exists */}
+      <DailyPhotoExistsModal
+        visible={isDailyExistsModalOpen}
+        onViewToday={() => {
+          setIsDailyExistsModalOpen(false);
+          router.push({
+            pathname: '/day/[date]',
+            params: { date: getLocalDateKey() },
+          });
+        }}
+        onReplaceToday={() => {
+          setIsDailyExistsModalOpen(false);
+          executeCapture(true);
+        }}
+        onCancel={() => {
+          setIsDailyExistsModalOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -544,17 +580,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   infoBannerRow: {
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 13, 22, 0.65)',
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 6,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  ledDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    shadowColor: '#22C55E',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
   },
   infoBannerText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: Fonts.mono,
     color: '#FFFDF6',
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   aspectRatioToolBar: {
     flexDirection: 'row',

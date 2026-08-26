@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { TapeDecoration } from '@/components/TapeDecoration';
 import { PozIcon } from '@/components/PozIcon';
@@ -28,10 +28,8 @@ export const PhotoBack: React.FC<PhotoBackProps> = ({
     özlemli: 'derin anılar & nostalji',
   };
 
-  const currentMood = photo.mood || 'sakin';
-  const moodSubtext = moodDescMap[currentMood] || 'sessiz anlar & iç huzur';
-
-  // Format date stamp e.g. "27/07/26"
+  const currentMood = photo.mood || 'huzurlu';
+  const moodSubtext = moodDescMap[currentMood] || 'sakin anlar & dingin zihin';
   const dateStampText = '27/07/26';
 
   return (
@@ -50,15 +48,20 @@ export const PhotoBack: React.FC<PhotoBackProps> = ({
         {/* Top Paper Tape */}
         <TapeDecoration position="top-left" width={48} height={14} color={Colors.tapeDefault} />
 
-        {/* Left Side Binder Holes (3 delik) */}
+        {/* Left Side Binder Holes */}
         <View style={styles.binderHolesColumn}>
+          <View style={styles.binderHole} />
           <View style={styles.binderHole} />
           <View style={styles.binderHole} />
           <View style={styles.binderHole} />
         </View>
 
-        {/* ── Main Card Inner Content ── */}
-        <View style={styles.innerContent}>
+        {/* ── Scrollable Notebook Blocks ── */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.innerContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* ── Block 1: BUGÜNÜN NOTU ── */}
           <View style={styles.memoBlock}>
             <Text style={styles.memoHeaderLabel}>BUGÜNÜN NOTU</Text>
@@ -76,81 +79,82 @@ export const PhotoBack: React.FC<PhotoBackProps> = ({
               </TouchableOpacity>
             )}
 
-            <View style={styles.memoDividerLine} />
             <Text style={styles.memoDateStamp}>{dateStampText}</Text>
+            <View style={styles.memoDividerLine} />
           </View>
 
-          {/* ── Block 2: Side-by-Side Pastel Cards (His & Konum) ── */}
-          <View style={styles.cardsRow}>
-            {/* Left: KARE HİSSİ Card (Pastel Sage Green) */}
-            <View style={styles.moodPastelCard}>
-              <View style={styles.cardHeaderRow}>
-                <PozIcon name="sparkle" size={13} color="#2D4A32" />
-                <Text style={styles.moodHeaderLabel}>KARE HİSSİ</Text>
-              </View>
+          {/* ── Block 2: KARE HİSSİ ── */}
+          <View style={styles.memoBlock}>
+            <View style={styles.headerRowWithIcon}>
+              <Text style={styles.memoHeaderLabel}>KARE HİSSİ</Text>
+              <PozIcon name="sparkle" size={12} color="#2563EB" />
+            </View>
 
+            <View style={styles.valueRow}>
               <Text style={styles.moodTitleText}>{currentMood}</Text>
-              <Text style={styles.moodSubtextText}>{moodSubtext}</Text>
-
-              {/* Botanical Leaf Motif Accent */}
-              <View style={styles.leafMotifBox}>
-                <Text style={styles.leafEmojiText}>🌿</Text>
-              </View>
+              <Text style={styles.leafEmojiText}>🌿</Text>
             </View>
+            <Text style={styles.memoSubText}>{moodSubtext}</Text>
 
-            {/* Right: KONUM Card (Pastel Sky Blue) */}
-            <View style={styles.locationPastelCard}>
-              <View style={styles.cardHeaderRow}>
-                <PozIcon name="photo" size={13} color="#1E40AF" />
-                <Text style={styles.locationHeaderLabel}>KONUM</Text>
-              </View>
-
-              <Text style={styles.locationTitleText}>{photo.location || 'Kadıköy'}</Text>
-              <Text style={styles.locationSubText}>İstanbul</Text>
-
-              <View style={styles.locationDividerLine} />
-              <Text style={styles.locationCoordsText}>41.042°N{'\n'}29.008°E</Text>
-
-              {/* Maiden's Tower / Landmark Sketch Icon Accent */}
-              <View style={styles.landmarkIconBox}>
-                <PozIcon name="sun" size={18} color="#93C5FD" />
-              </View>
-            </View>
+            <View style={styles.memoDividerLine} />
           </View>
 
-          {/* ── Block 3: Capsule Pills Row ── */}
+          {/* ── Block 3: KONUM ── */}
+          <View style={styles.memoBlock}>
+            <View style={styles.headerRowWithIcon}>
+              <Text style={styles.memoHeaderLabel}>KONUM</Text>
+              <PozIcon name="photo" size={12} color="#2563EB" />
+            </View>
+
+            <Text style={styles.locationTitleText}>{photo.location || 'Kadıköy, İstanbul'}</Text>
+            <Text style={styles.memoSubText}>41.042°N · 29.008°E</Text>
+
+            <View style={styles.memoDividerLine} />
+          </View>
+
+          {/* ── Block 4: ŞARKI (if available) ── */}
+          {photo.song ? (
+            <View style={styles.memoBlock}>
+              <View style={styles.headerRowWithIcon}>
+                <Text style={styles.memoHeaderLabel}>ŞARKI</Text>
+                <PozIcon name="star" size={12} color="#D97706" />
+              </View>
+              <Text style={styles.songTitleText}>
+                🎵 {photo.song.title} <Text style={styles.songArtistText}>— {photo.song.artist}</Text>
+              </Text>
+              <View style={styles.memoDividerLine} />
+            </View>
+          ) : null}
+
+          {/* ── Block 5: Capsule Pills Row ── */}
           <View style={styles.pillsRow}>
-            {/* Square Hash Badge */}
             <View style={styles.hashBadgeSquare}>
               <Text style={styles.hashBadgeText}>#</Text>
             </View>
 
-            {/* Midnight Flash Pill */}
             <View style={styles.purplePill}>
               <PozIcon name="sparkle" size={10} color="#6B21A8" />
               <Text style={styles.purplePillText}>{photo.filmTitle || 'midnight flash'}</Text>
             </View>
 
-            {/* Gece Yürüyüşü Pill */}
             <View style={styles.greenPill}>
               <PozIcon name="star" size={10} color="#15803D" />
               <Text style={styles.greenPillText}>gece yürüyüşü</Text>
             </View>
 
-            {/* Analog Pill */}
             <View style={styles.brownPill}>
               <PozIcon name="camera" size={10} color="#78350F" />
               <Text style={styles.brownPillText}>analog</Text>
             </View>
           </View>
 
-          {/* ── Block 4: Technical Editorial Footer ── */}
+          {/* ── Block 6: Technical Editorial Footer ── */}
           <View style={styles.technicalFooter}>
             <Text style={styles.technicalFooterText}>
               POZ · 35MM ISO 800 · FRM {photo.frameCode || '021'}
             </Text>
           </View>
-        </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /* 35mm Film Negative Strip behind right edge */
+  /* 35mm Film Negative Strip peeking behind right edge */
   filmStripPeeking: {
     position: 'absolute',
     top: 12,
@@ -207,8 +211,8 @@ const styles = StyleSheet.create({
     elevation: 6,
     zIndex: 2,
     position: 'relative',
-    paddingLeft: 22,
-    paddingRight: 16,
+    paddingLeft: 20,
+    paddingRight: 14,
     paddingTop: 16,
     paddingBottom: 12,
   },
@@ -217,187 +221,130 @@ const styles = StyleSheet.create({
   binderHolesColumn: {
     position: 'absolute',
     left: 8,
-    top: 60,
-    gap: 14,
+    top: 50,
+    gap: 16,
     zIndex: 3,
   },
   binderHole: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#EAE5D9',
     borderWidth: 1,
     borderColor: 'rgba(24, 19, 29, 0.15)',
   },
 
-  innerContent: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'space-between',
+  },
+  innerContent: {
+    paddingBottom: 8,
   },
 
-  /* Block 1: BUGÜNÜN NOTU */
+  /* Notebook Blocks */
   memoBlock: {
-    marginTop: 4,
+    marginBottom: 8,
+  },
+  headerRowWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 3,
   },
   memoHeaderLabel: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontFamily: Fonts.mono,
     color: Colors.textMuted,
     letterSpacing: 1.5,
-    marginBottom: 6,
-    fontWeight: '700',
+    marginBottom: 4,
+    fontWeight: '800',
   },
   memoNoteText: {
-    fontSize: 14.5,
+    fontSize: 14,
     fontFamily: Fonts.serif,
     color: Colors.text,
     fontStyle: 'italic',
-    lineHeight: 20,
+    lineHeight: 19,
   },
   readMoreLink: {
-    marginTop: 4,
+    marginTop: 3,
   },
   readMoreText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: Fonts.sansBold,
     color: Colors.stampRed,
     textDecorationLine: 'underline',
   },
-  memoDividerLine: {
-    height: 1,
-    backgroundColor: 'rgba(24, 19, 29, 0.08)',
-    marginTop: 10,
-    marginBottom: 4,
-  },
   memoDateStamp: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: Fonts.mono,
     color: Colors.textSecondary,
     textAlign: 'right',
     fontStyle: 'italic',
+    marginTop: 2,
+  },
+  memoDividerLine: {
+    height: 1,
+    backgroundColor: 'rgba(24, 19, 29, 0.08)',
+    marginTop: 8,
   },
 
-  /* Block 2: Side-by-Side Pastel Cards */
-  cardsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginVertical: 8,
-  },
-
-  /* Mood Card (Pastel Sage Green) */
-  moodPastelCard: {
-    flex: 1,
-    backgroundColor: '#E1E8D5',
-    borderRadius: 14,
-    padding: 12,
-    position: 'relative',
-    minHeight: 120,
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: 'rgba(45, 74, 50, 0.08)',
-  },
-  cardHeaderRow: {
+  valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 4,
-  },
-  moodHeaderLabel: {
-    fontSize: 8.5,
-    fontFamily: Fonts.mono,
-    color: '#2D4A32',
-    letterSpacing: 1,
-    fontWeight: '700',
+    justifyContent: 'space-between',
   },
   moodTitleText: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: Fonts.serif,
     fontWeight: '900',
-    color: '#1E3A27',
-  },
-  moodSubtextText: {
-    fontSize: 10,
-    fontFamily: Fonts.sans,
-    color: '#38523F',
-    marginTop: 2,
-    lineHeight: 13,
-  },
-  leafMotifBox: {
-    position: 'absolute',
-    bottom: 6,
-    left: 8,
-    opacity: 0.6,
+    color: Colors.text,
   },
   leafEmojiText: {
-    fontSize: 24,
+    fontSize: 16,
   },
-
-  /* Location Card (Pastel Sky Blue) */
-  locationPastelCard: {
-    flex: 1,
-    backgroundColor: '#E2EFF8',
-    borderRadius: 14,
-    padding: 12,
-    position: 'relative',
-    minHeight: 120,
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: 'rgba(30, 64, 175, 0.08)',
-  },
-  locationHeaderLabel: {
-    fontSize: 8.5,
-    fontFamily: Fonts.mono,
-    color: '#1E40AF',
-    letterSpacing: 1,
-    fontWeight: '700',
-  },
-  locationTitleText: {
-    fontSize: 17,
-    fontFamily: Fonts.sansBold,
-    color: '#1E3A8A',
-  },
-  locationSubText: {
-    fontSize: 11,
+  memoSubText: {
+    fontSize: 10.5,
     fontFamily: Fonts.sans,
-    color: '#3B82F6',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
-  locationDividerLine: {
-    height: 1,
-    backgroundColor: 'rgba(30, 58, 138, 0.12)',
-    marginVertical: 4,
-  },
-  locationCoordsText: {
-    fontSize: 8.5,
-    fontFamily: Fonts.mono,
-    color: '#2563EB',
-    lineHeight: 11,
-  },
-  landmarkIconBox: {
-    position: 'absolute',
-    bottom: 6,
-    right: 8,
-    opacity: 0.7,
+
+  locationTitleText: {
+    fontSize: 15,
+    fontFamily: Fonts.sansBold,
+    color: Colors.text,
   },
 
-  /* Block 3: Capsule Pills Row */
+  songTitleText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansBold,
+    color: Colors.text,
+  },
+  songArtistText: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+  },
+
+  /* Capsule Pills Row */
   pillsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginVertical: 4,
+    marginVertical: 8,
     flexWrap: 'wrap',
   },
   hashBadgeSquare: {
-    width: 26,
-    height: 24,
-    borderRadius: 6,
+    width: 24,
+    height: 22,
+    borderRadius: 5,
     backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
   },
   hashBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: Fonts.mono,
     color: '#FFFDF6',
     fontWeight: '800',
@@ -407,12 +354,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#F0E6FE',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: BorderRadius.pill,
   },
   purplePillText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: Fonts.sansBold,
     color: '#6B21A8',
   },
@@ -421,12 +368,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#E6F0E6',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: BorderRadius.pill,
   },
   greenPillText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: Fonts.sansBold,
     color: '#15803D',
   },
@@ -435,23 +382,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#F2ECE4',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: BorderRadius.pill,
   },
   brownPillText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: Fonts.sansBold,
     color: '#78350F',
   },
 
-  /* Block 4: Technical Editorial Footer */
+  /* Technical Editorial Footer */
   technicalFooter: {
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
   technicalFooterText: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: Fonts.mono,
     color: 'rgba(24, 19, 29, 0.35)',
     letterSpacing: 1.5,

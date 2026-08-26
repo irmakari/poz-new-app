@@ -25,6 +25,7 @@ import { DayDetailsReceipt } from '@/components/DayDetailsReceipt';
 import { EmptyDayView } from '@/components/EmptyDayView';
 import { PozIcon } from '@/components/PozIcon';
 import { useApp } from '@/context/AppContext';
+import { getDailyPhotoForDate } from '@/utils/dailyMemory.utils';
 import { DAY_ENTRIES } from '@/utils/dayData';
 
 export default function DayDetailScreen() {
@@ -35,7 +36,8 @@ export default function DayDetailScreen() {
   const { dailyNotes, photos, deleteDailyNote, selectCaptureMode } = useApp();
 
   const dateMatchStr = dateStr.includes('-') ? dateStr : '2026-07-27';
-  const dayDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && (p.date.includes(dateStr) || p.date.includes('27 temmuz')));
+  const canonicalDailyPhoto = getDailyPhotoForDate(photos, dateStr);
+  const dayDailyPhotos = canonicalDailyPhoto ? [canonicalDailyPhoto] : [];
   const dayFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && (p.date.includes(dateStr) || p.date.includes('27 temmuz')));
 
   const mockEntry = DAY_ENTRIES[dateStr];

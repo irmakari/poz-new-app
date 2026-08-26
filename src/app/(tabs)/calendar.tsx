@@ -8,6 +8,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { DayMemory, generateCalendarGrid, MOCK_MEMORIES } from '@/utils/calendarUtils';
 import { getTodayKey } from '@/utils/dateUtils';
+import { getDailyPhotoForDate } from '@/utils/dailyMemory.utils';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -60,10 +61,10 @@ export default function CalendarScreen() {
   const getMemoryForDate = (dateStr: string): DayMemory | undefined => {
     const mock = MOCK_MEMORIES[dateStr];
     const userNote = dailyNotes[dateStr];
-    const userDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && p.date.includes(dateStr));
+    const canonicalDailyPhoto = getDailyPhotoForDate(photos, dateStr);
     const userFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && p.date.includes(dateStr));
 
-    const dailyPhotosCount = userDailyPhotos.length;
+    const dailyPhotosCount = canonicalDailyPhoto ? 1 : 0;
     const filmPhotosCount = (mock?.photos || 0) + userFilmPhotos.length;
     const photosCount = dailyPhotosCount + filmPhotosCount;
 

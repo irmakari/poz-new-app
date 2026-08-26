@@ -18,7 +18,7 @@ interface DefaultFilmModalProps {
 }
 
 const FILM_OPTIONS = [
-  { id: 'f1', title: 'summer glow', type: '35mm · iso 400', color: Colors.lavender },
+  { id: 'f1', title: 'summer glow', type: '35mm · iso 400', color: '#111827' },
   { id: 'f2', title: 'golden hour', type: '35mm · iso 400', color: Colors.yellow },
   { id: 'f3', title: 'soft sunday', type: '35mm · iso 200', color: Colors.green },
   { id: 'f4', title: 'midnight flash', type: '35mm · iso 800', color: Colors.blue },

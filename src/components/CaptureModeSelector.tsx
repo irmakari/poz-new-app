@@ -163,10 +163,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   filmCardActive: {
-    backgroundColor: '#8F66E3',
+    backgroundColor: '#182235',
     borderWidth: 2,
-    borderColor: '#FFFDF9',
-    shadowColor: '#8F66E3',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#182235',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 6,

@@ -52,7 +52,7 @@ export const FILM_TYPE_OPTIONS: FilmTypeOption[] = [
     name: 'midnight flash',
     iso: 800,
     description: 'gece ve flaş çekimleri',
-    primaryColor: '#231F33', // Dark mürdüm
+    primaryColor: '#182235', // Deep Midnight Navy
     darkColor: '#CBEBFC',
     serialPrefix: 'MF',
   },

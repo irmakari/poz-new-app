@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initialFilmList, FilmItem, FilmPhoto, generateAutoFilmName } from '@/utils/filmData';
 import { initialPhotoEntries, PhotoEntry, CaptureMode } from '@/utils/photoDetailData';
 import { getTodayKey, getFormattedTodayFull, getFormattedTime } from '@/utils/dateUtils';
+import { getLocalDateKey, getDailyPhotoForDate, hasDailyPhotoForDate } from '@/utils/dailyMemory.utils';
 import { filmsApi, photosApi, notesApi, authApi } from '@/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -42,6 +43,20 @@ interface AppContextType {
 
   // Capture mode
   selectCaptureMode: (mode: CaptureMode) => void;
+
+  // Daily Photo single-photo helpers & actions
+  dailyPhotoForDate: (dateKey?: string) => PhotoEntry | null;
+  hasDailyPhotoForDate: (dateKey?: string) => boolean;
+  replaceDailyPhoto: (
+    dateKey: string,
+    data: {
+      photoUri?: string;
+      note?: string;
+      song?: { title: string; artist: string; albumCover?: string } | null;
+      mood?: string | null;
+      location?: string | null;
+    }
+  ) => Promise<void>;
 
   // Photo actions
   addDailyPhoto: (data: {
@@ -309,6 +324,83 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try { await AsyncStorage.setItem(STORAGE_KEYS.CAPTURE_MODE, mode); } catch {}
   };
 
+  // ── Daily Photo Single-Photo Helpers & Replacement ───────────────────────
+  const dailyPhotoForDate = (dateKey?: string): PhotoEntry | null => {
+    return getDailyPhotoForDate(photos, dateKey || DEFAULT_TODAY_KEY);
+  };
+
+  const hasDailyPhotoForDateHelper = (dateKey?: string): boolean => {
+    return hasDailyPhotoForDate(photos, dateKey || DEFAULT_TODAY_KEY);
+  };
+
+  const replaceDailyPhoto = async (
+    dateKey: string,
+    data: {
+      photoUri?: string;
+      note?: string;
+      song?: { title: string; artist: string; albumCover?: string } | null;
+      mood?: string | null;
+      location?: string | null;
+    }
+  ) => {
+    const targetDateKey = getLocalDateKey(dateKey);
+    const existingPhoto = getDailyPhotoForDate(photos, targetDateKey);
+
+    const isoNow = new Date().toISOString();
+    const newPhoto: PhotoEntry = {
+      id: `daily-${Date.now()}`,
+      captureMode: 'daily',
+      status: 'developed',
+      visibility: 'immediate',
+      filmId: null,
+      filmTitle: null,
+      date: getFormattedTodayFull(),
+      time: getFormattedTime(),
+      photoUri: data.photoUri,
+      note: data.note || '',
+      song: data.song ? { title: data.song.title, artist: data.song.artist } : undefined,
+      mood: data.mood || undefined,
+      location: data.location || undefined,
+      bgColors: ['#FFB88C', '#DE6262'],
+      sceneType: 'coffee-table',
+      developedAt: isoNow,
+    };
+
+    // Safe replacement: filter out old photo only when saving new photo to storage
+    const filteredPhotos = existingPhoto
+      ? photos.filter((p) => p.id !== existingPhoto.id)
+      : photos;
+    const updatedPhotos = [newPhoto, ...filteredPhotos];
+
+    await savePhotosToStorage(updatedPhotos);
+
+    if (data.note || data.mood || data.song) {
+      await saveDailyNote(targetDateKey, {
+        note: data.note || dailyNotes[targetDateKey]?.note || '',
+        mood: data.mood || dailyNotes[targetDateKey]?.mood,
+        location: data.location || dailyNotes[targetDateKey]?.location,
+        song: data.song
+          ? { title: data.song.title, artist: data.song.artist }
+          : dailyNotes[targetDateKey]?.song,
+      });
+    }
+
+    photosApi
+      .upload({
+        captureMode: 'daily',
+        photoUri: data.photoUri,
+        note: data.note,
+        location: data.location || undefined,
+        mood: data.mood || undefined,
+        song: data.song,
+      })
+      .catch(() => null);
+
+    if (existingPhoto?.id && !existingPhoto.id.startsWith('daily-')) {
+      photosApi.delete(existingPhoto.id).catch(() => null);
+    }
+  };
+
   // ── Photo: Add daily ──────────────────────────────────────────────────────
   const addDailyPhoto = async (data: {
     photoUri?: string;
@@ -317,8 +409,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mood?: string | null;
     location?: string | null;
   }) => {
-    const isoNow = new Date().toISOString();
     const todayStr = DEFAULT_TODAY_KEY;
+    if (hasDailyPhotoForDate(photos, todayStr)) {
+      await replaceDailyPhoto(todayStr, data);
+      return;
+    }
+
+    const isoNow = new Date().toISOString();
     const newPhoto: PhotoEntry = {
       id: `daily-${Date.now()}`,
       captureMode: 'daily',
@@ -628,6 +725,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         registerUser,
         logoutUser,
         selectCaptureMode,
+        dailyPhotoForDate,
+        hasDailyPhotoForDate: hasDailyPhotoForDateHelper,
+        replaceDailyPhoto,
         addDailyPhoto,
         addPhotoFrame,
         updatePhotoFrame,

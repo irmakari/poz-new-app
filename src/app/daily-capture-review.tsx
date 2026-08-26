@@ -31,6 +31,7 @@ import { FILTERS, FilterType } from '@/constants/filmFilters';
 import { MockSongItem } from '@/utils/captureReviewData';
 import { useApp } from '@/context/AppContext';
 import { getFormattedTodayFull, getFormattedTodayStamp } from '@/utils/dateUtils';
+import { getLocalDateKey } from '@/utils/dailyMemory.utils';
 
 export default function DailyCaptureReviewScreen() {
   const router = useRouter();
@@ -39,13 +40,15 @@ export default function DailyCaptureReviewScreen() {
     viewfinderMode = 'compact',
     selectedFilter: paramFilter = 'dazz-green',
     isDreamyGlow: paramGlow = '1',
+    captureIntent = 'createDaily',
   } = useLocalSearchParams<{
     photoUri?: string;
     viewfinderMode?: string;
     selectedFilter?: string;
     isDreamyGlow?: string;
+    captureIntent?: 'createDaily' | 'replaceDaily';
   }>();
-  const { addDailyPhoto } = useApp();
+  const { addDailyPhoto, replaceDailyPhoto } = useApp();
 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>((paramFilter as FilterType) || 'dazz-green');
   const [isDreamyGlow, setIsDreamyGlow] = useState(paramGlow !== '0');
@@ -128,13 +131,19 @@ export default function DailyCaptureReviewScreen() {
     setIsSaving(true);
 
     try {
-      await addDailyPhoto({
+      const payload = {
         photoUri,
         note: note.trim(),
         song: selectedSong ? { title: selectedSong.title, artist: selectedSong.artist } : null,
         mood: customMood.trim() || selectedMood,
         location: selectedLocation,
-      });
+      };
+
+      if (captureIntent === 'replaceDaily') {
+        await replaceDailyPhoto(getLocalDateKey(), payload);
+      } else {
+        await addDailyPhoto(payload);
+      }
 
       // Navigate back to camera or home immediately
       router.replace('/(tabs)/camera');

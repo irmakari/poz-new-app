@@ -10,6 +10,7 @@ import { BorderRadius, Colors, Fonts, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { MockSongItem } from '@/utils/captureReviewData';
 import { getFormattedTime, getFormattedTodayHeader, getTodayKey } from '@/utils/dateUtils';
+import { getDailyPhotoForDate } from '@/utils/dailyMemory.utils';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -40,10 +41,10 @@ export default function HomeScreen() {
   const hasMood = Boolean(todayNoteObj && todayNoteObj.mood && todayNoteObj.mood.trim());
   const hasSong = Boolean(todayNoteObj && todayNoteObj.song && todayNoteObj.song.title && todayNoteObj.song.title.trim());
 
-  const todayDailyPhotos = photos.filter((p) => p.captureMode === 'daily' && p.date && (p.date.includes('28 temmuz') || p.date.includes(todayKey)));
+  const canonicalDailyPhoto = getDailyPhotoForDate(photos, todayKey);
   const todayFilmPhotos = photos.filter((p) => p.captureMode !== 'daily' && p.date && (p.date.includes('28 temmuz') || p.date.includes(todayKey)));
 
-  const dailyCount = todayDailyPhotos.length;
+  const dailyCount = canonicalDailyPhoto ? 1 : 0;
   const filmCount = todayFilmPhotos.length;
 
   const currentFrames = activeFilm ? (activeFilm.currentFrames ?? activeFilm.frameCount ?? 12) : 12;

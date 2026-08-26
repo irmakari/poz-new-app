@@ -71,6 +71,24 @@ router.post('/upload', authMiddleware, upload.single('photo'), async (req, res) 
       captured_at: new Date().toISOString()
     };
 
+    if (captureMode === 'daily') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      mockPhotos = mockPhotos.filter(
+        (p) => !(p.capture_mode === 'daily' && p.captured_at && p.captured_at.startsWith(todayStr))
+      );
+
+      if (supabase) {
+        await supabase
+          .from('photos')
+          .delete()
+          .eq('user_id', newPhoto.user_id)
+          .eq('capture_mode', 'daily')
+          .gte('captured_at', `${todayStr}T00:00:00.000Z`)
+          .lte('captured_at', `${todayStr}T23:59:59.999Z`)
+          .catch(() => {});
+      }
+    }
+
     if (supabase) {
       const { data, error } = await supabase.from('photos').insert([newPhoto]).select().single();
       if (!error && data) {

@@ -27,11 +27,31 @@ export const CompletedFilmBox: React.FC<CompletedFilmBoxProps> = ({
     }
   };
 
-  const isDark = !film.color || film.color.startsWith('#1') || film.color.startsWith('#2') || film.color.startsWith('#3') || film.color.startsWith('#5') || film.color === Colors.deepNavy || film.color === Colors.plum || film.color === Colors.burgundy || film.color === Colors.brown;
+  const getDarkFilmColor = (rawColor?: string) => {
+    if (
+      !rawColor ||
+      rawColor === Colors.lavender ||
+      rawColor.toLowerCase().includes('lavender') ||
+      rawColor.toLowerCase().includes('purple') ||
+      ['#e3d7ff', '#c6a5ff', '#8b5cf6', '#ddd6fe', '#e9d5ff', '#2a1730', '#231f33', '#581c87'].includes(rawColor.toLowerCase()) ||
+      rawColor.startsWith('#E') ||
+      rawColor.startsWith('#e') ||
+      rawColor.startsWith('#D') ||
+      rawColor.startsWith('#d') ||
+      rawColor.startsWith('#F') ||
+      rawColor.startsWith('#f')
+    ) {
+      return '#111827';
+    }
+    return rawColor;
+  };
+
+  const cardBg = getDarkFilmColor(film.colorToken || film.color);
+  const isDark = true;
 
   return (
     <ScrapbookCard
-      bgColor={film.color}
+      bgColor={cardBg}
       rotation={film.rotation}
       hasTape="top-left"
       tapeColor={Colors.tapeDefault}
@@ -40,8 +60,8 @@ export const CompletedFilmBox: React.FC<CompletedFilmBoxProps> = ({
       style={styles.containerCard}
     >
       <View style={styles.topRow}>
-        <PaperStamp label={film.stampText || 'AÇILDI'} color={isDark ? Colors.stampRed : Colors.burgundy} rotation="2deg" />
-        <Text style={[styles.frameCountText, { color: isDark ? '#F4ECE2' : Colors.ink }]}>
+        <PaperStamp label={film.stampText || 'AÇILDI'} color={Colors.stampRed} rotation="2deg" />
+        <Text style={[styles.frameCountText, { color: '#F4ECE2' }]}>
           {film.totalFrames} KARE
         </Text>
       </View>
